@@ -1,0 +1,23 @@
+/*
+ * File: assets/css/style.css
+ * @version 1.0.0
+ * @author greghacke
+ */
+
+.access-role-tag {
+    display: inline-block;
+    background: #eee;
+    border: 1px solid #ccc;
+    padding: 4px 8px;
+    margin: 2px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+.access-role-tag button.remove-role-button {
+    border: none;
+    background: transparent;
+    color: #c00;
+    font-weight: bold;
+    cursor: pointer;
+    margin-left: 4px;
+}
