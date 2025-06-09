@@ -1,4 +1,4 @@
-=== accessSchema ===  
+ accessSchema   
 Contributors: greghacke  
 Tags: roles, access control, permissions, REST API, audit log  
 Requires at least: 6.0  
@@ -12,7 +12,7 @@ Manage role-based access hierarchies with logging, constraints, and REST API con
 
 ---
 
-## == Description ==
+##   Description  
 
 The `accessSchema` plugin provides a centralized framework for defining and enforcing structured access roles across a WordPress site or external system. It is especially tailored for organizations that require nested roles and audit trails — such as OWBN Chronicle operations.
 
@@ -50,7 +50,7 @@ The `accessSchema` plugin provides a centralized framework for defining and enfo
 
 ---
 
-## == Shortcodes ==
+##   Shortcodes  
 
 The plugin provides several shortcodes to embed or utilize role data in the frontend or other plugin logic:
 
@@ -62,7 +62,7 @@ The plugin provides several shortcodes to embed or utilize role data in the fron
 
 ---
 
-## == Utilities (`includes/util/access-utils.php`) ==
+##   Utilities (`includes/util/access-utils.php`)  
 
 The `access-utils.php` module provides helper functions used internally and externally by developers:
 
@@ -80,7 +80,7 @@ The `access-utils.php` module provides helper functions used internally and exte
 
 ---
 
-## == Installation ==
+##   Installation  
 
 1. Upload or clone the plugin to `wp-content/plugins/accessSchema`  
 2. Activate via WordPress Admin under *Plugins*  
@@ -95,9 +95,9 @@ define('ACCESS_SCHEMA_LOG_LEVEL', 'INFO'); // DEBUG | INFO | WARN | ERROR
 
 ---
 
-## == Changelog ==
+##   Changelog  
 
-### = 1.0.0 =
+### 1.0.0
 - Initial release with:
   - Hierarchical role creation
   - REST API endpoints
@@ -107,10 +107,10 @@ define('ACCESS_SCHEMA_LOG_LEVEL', 'INFO'); // DEBUG | INFO | WARN | ERROR
 
 ---
 
-## == Upgrade Notice ==
+##   Upgrade Notice  
 
-### = 1.0.0 =
+### 1.0.0
 Initial beta for accessSchema with full support for registration, validation, and REST-based integration.
 
-### = 1.0.1 =
+### 1.0.1
 Client agent tools
