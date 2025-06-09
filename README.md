@@ -80,6 +80,96 @@ The `access-utils.php` module provides helper functions used internally and exte
 
 ---
 
+## Client Integration
+
+The AccessSchema Client enables any external WordPress plugin to interact with a centralized AccessSchema server for role management. This allows for consistent permission checks, centralized control, and cross-plugin role sharing.
+
+### Setup
+
+To use the client in your plugin:
+
+1. **Include the client file**:
+
+   \```php
+   require_once plugin_dir_path(__FILE__) . 'includes/client/accessSchemaClient.php';
+   \```
+
+2. **Define your host and API key** (usually in `wp-config.php` or early in your plugin):
+
+   \```php
+   define('ACCESS_SCHEMA_CLIENT_HOST', 'https://your-central-server.example.com');
+   define('ACCESS_SCHEMA_CLIENT_API_KEY', 'your-api-key-goes-here');
+   \```
+
+### API Functions
+
+#### `accessSchema_client_register_paths(array $paths): array`
+
+Register one or more role paths on the remote AccessSchema server.
+
+\```php
+$paths = [
+    ['Chronicles', 'KONY', 'HST'],
+    ['Chronicles', 'BETA', 'CM'],
+];
+$response = accessSchema_client_register_paths($paths);
+\```
+
+#### `accessSchema_client_grant_role(int|string $user, string $role_path): bool`
+
+Grant a specific role to a user.
+
+\```php
+accessSchema_client_grant_role(42, 'Chronicles/KONY/CM');
+accessSchema_client_grant_role('user@example.com', 'Chronicles/BETA/HST');
+\```
+
+#### `accessSchema_client_revoke_role(int|string $user, string $role_path): bool`
+
+Revoke a previously granted role.
+
+\```php
+accessSchema_client_revoke_role(42, 'Chronicles/KONY/HST');
+\```
+
+#### `accessSchema_client_get_roles(int|string $user): array`
+
+Get all role paths for the user.
+
+\```php
+$roles = accessSchema_client_get_roles('user@example.com');
+\```
+
+#### `accessSchema_client_check_access(int|string $user, string $role_path, bool $include_children = false): bool`
+
+Check if a user has access to a given role path. If `$include_children` is true, child roles are matched as well.
+
+\```php
+if ( accessSchema_client_check_access(42, 'Chronicles/KONY', true) ) {
+    echo 'Access granted.';
+} else {
+    echo 'Access denied.';
+}
+\```
+
+### Example: Display Section If Access Granted
+
+\```php
+if ( function_exists('accessSchema_client_check_access') ) {
+    if ( accessSchema_client_check_access(get_current_user_id(), 'Coordinators/Brujah/Subcoordinator') ) {
+        echo '<p>You may configure clan-level access here.</p>';
+    }
+}
+\```
+
+### Security
+
+- All requests use an `X-API-Key` header with the API key defined in your environment.
+- Ensure HTTPS is used for all traffic.
+- Do not expose or log the API key on the frontend.
+
+---
+
 ##   Installation  
 
 1. Upload or clone the plugin to `wp-content/plugins/accessSchema`  
