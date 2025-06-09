@@ -19,3 +19,7 @@ This module declares its master site (if applicable), registers post types, hand
 
 = 1.0.0 =
 * Initial scaffolding for the <Tool Name> module.
+
+
+= 1.0.1 =
+Client agent tools

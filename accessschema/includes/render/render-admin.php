@@ -1,6 +1,6 @@
 <?php
 // File: includes/render/render-admin.php
-// @version 1.0.0
+// @version 1.0.1
 // Author: greghacke
 
 defined( 'ABSPATH' ) || exit;
@@ -61,10 +61,10 @@ function accessSchema_render_user_role_ui( $user ) {
     // Enqueue styles and scripts
     $base = dirname( __DIR__, 2 ) . '/accessSchema.php';
     wp_enqueue_style( 'accessSchema-select2', plugins_url( '/assets/css/select2.min.css', $base ), [], '4.1.0' );
-    wp_enqueue_style( 'accessSchema-style', plugins_url( '/assets/css/accessSchema.css', $base ), [], '1.0.0' );
+    wp_enqueue_style( 'accessSchema-style', plugins_url( '/assets/css/accessSchema.css', $base ), [], '1.0.1' );
 
     wp_enqueue_script( 'accessSchema-select2', plugins_url( '/assets/js/select2.min.js', $base ), [ 'jquery' ], '4.1.0', true );
-    wp_enqueue_script( 'accessSchema-init', plugins_url( '/assets/js/accessSchema.js', $base ), [ 'jquery', 'accessSchema-select2' ], '1.0.0', true );
+    wp_enqueue_script( 'accessSchema-init', plugins_url( '/assets/js/accessSchema.js', $base ), [ 'jquery', 'accessSchema-select2' ], '1.0.1', true );
 
     accessSchema_render_user_role_select( $all_roles, $assigned );
 }
