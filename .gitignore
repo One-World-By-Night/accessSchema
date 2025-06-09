@@ -35,6 +35,10 @@ wp-config.php
 # htaccess
 /.htaccess
 
+# macOS
+**/.DS_Store
+/.DS_Store
+
 # All plugins
 #
 # Note: If you wish to whitelist plugins,
