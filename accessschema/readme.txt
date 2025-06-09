@@ -35,3 +35,7 @@ This plugin enables:
 
 = 1.0.0 =
 Initial beta for accessSchema with role registration and REST access.
+
+
+= 1.0.1 =
+Client agent tools

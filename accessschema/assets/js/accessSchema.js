@@ -1,5 +1,5 @@
 // File: assets/js/accessSchema.js
-// @version 1.0.0
+// @version 1.0.1
 
 document.addEventListener('DOMContentLoaded', function () {
     // Handle role removal via (×) button

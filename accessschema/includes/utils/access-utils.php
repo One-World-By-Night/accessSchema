@@ -1,6 +1,6 @@
 <?php
 // File: includes/utils/access-utils.php
-// @version 1.0.0
+// @version 1.0.1
 // Author: greghacke
 
 defined( 'ABSPATH' ) || exit;

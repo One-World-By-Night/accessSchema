@@ -4,7 +4,7 @@ Tags: roles, access control, permissions, REST API, audit log
 Requires at least: 6.0  
 Tested up to: 6.8  
 Requires PHP: 7.4  
-Stable tag: 1.0.0  
+Stable tag: 1.0.1 
 License: GPLv2 or later  
 License URI: http://www.gnu.org/licenses/gpl-2.0.html  
 
@@ -111,3 +111,6 @@ define('ACCESS_SCHEMA_LOG_LEVEL', 'INFO'); // DEBUG | INFO | WARN | ERROR
 
 ### = 1.0.0 =
 Initial beta for accessSchema with full support for registration, validation, and REST-based integration.
+
+### = 1.0.1 =
+Client agent tools
