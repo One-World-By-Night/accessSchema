@@ -1,14 +1,27 @@
 <?php
 
 // File: accessschema-client/fields.php
-// @version 1.1.0
+// @version 1.2.0
 // @tool accessschema-client
 
 defined( 'ABSPATH' ) || exit;
 
 add_action('admin_init', function () {
-    register_setting('accessschema_client', 'accessschema_client_url');
-    register_setting('accessschema_client', 'accessschema_client_key');
+    register_setting(
+        'accessschema_client',
+        'accessschema_client_url',
+        [
+            'sanitize_callback' => 'esc_url_raw',
+        ]
+    );
+
+    register_setting(
+        'accessschema_client',
+        'accessschema_client_key',
+        [
+            'sanitize_callback' => 'sanitize_text_field',
+        ]
+    );
 
     add_settings_section(
         'accessschema_client_section',

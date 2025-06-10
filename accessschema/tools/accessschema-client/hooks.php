@@ -1,6 +1,6 @@
 <?php
 // File: accessschema-client/hooks.php
-// @version 1.1.0
+// @version 1.2.0
 // @tool accessschema-client
 
 defined('ABSPATH') || exit;
@@ -60,18 +60,76 @@ function accessSchema_remote_post($endpoint, array $body) {
 /* Get remote roles for a user by email.
  */
 function accessSchema_remote_get_roles_by_email($email) {
-    return accessSchema_remote_post('roles', [
+    $user = get_user_by('email', $email);
+
+    if ($user) {
+        $cached = get_user_meta($user->ID, 'accessschema_cached_roles', true);
+        if (!empty($cached) && is_array($cached)) {
+            return ['roles' => $cached];
+        }
+    }
+
+    // Fallback to remote call
+    $response = accessSchema_remote_post('roles', [
         'email' => sanitize_email($email)
     ]);
+
+    // If successful and user exists, cache it
+    if (!is_wp_error($response) && isset($response['roles']) && $user) {
+        update_user_meta($user->ID, 'accessschema_cached_roles', $response['roles']);
+    }
+
+    return $response;
 }
 
 /* Grant a role to a user on the remote system.
  */
 function accessSchema_remote_grant_role($email, $role_path) {
-    return accessSchema_remote_post('grant', [
+    $result = accessSchema_remote_post('grant', [
         'email'     => sanitize_email($email),
         'role_path' => sanitize_text_field($role_path),
     ]);
+
+    // Invalidate cache
+    $user = get_user_by('email', $email);
+    if ($user) {
+        delete_user_meta($user->ID, 'accessschema_cached_roles');
+    }
+
+    return $result;
+}
+
+/* Revoke a role to a user on the remote system.
+ */
+function accessSchema_remote_revoke_role($email, $role_path) {
+    $result = accessSchema_remote_post('revoke', [
+        'email'     => sanitize_email($email),
+        'role_path' => sanitize_text_field($role_path),
+    ]);
+
+    $user = get_user_by('email', $email);
+    if ($user) {
+        delete_user_meta($user->ID, 'accessschema_cached_roles');
+    }
+
+    return $result;
+}
+
+/* Refresh roles for a user by fetching from remote.
+ *
+ * @param WP_User $user The user object.
+ * @return array|WP_Error The roles array or error.
+ */
+function accessSchema_refresh_roles_for_user($user) {
+    if ($user instanceof WP_User) {
+        $email = $user->user_email;
+        $roles = accessSchema_remote_post('roles', ['email' => sanitize_email($email)]);
+        if (!is_wp_error($roles) && isset($roles['roles'])) {
+            update_user_meta($user->ID, 'accessschema_cached_roles', $roles['roles']);
+            return $roles;
+        }
+    }
+    return new WP_Error('refresh_failed', 'Could not refresh roles.');
 }
 
 /* Check if user has role or descendant.
