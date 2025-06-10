@@ -1,13 +1,12 @@
 <?php
-// File: includes/external-access/client.php
-// @version 1.0.5
+// File: accessschema-client/client.php
+// @version 1.1.0
 // Author: greghacke
 // Description: Calls an external WordPress site's accessSchema API from *another* WordPress instance.
 
 defined( 'ABSPATH' ) || exit;
 
-/**
- * Remote config: external site URL and API key.
+/* Remote config: external site URL and API key.
  */
 define( 'REMOTE_ACCESS_SCHEMA_URL', 'https://example.com/wp-json/access-schema/v1' );
 define( 'REMOTE_ACCESS_SCHEMA_KEY', 'your-shared-api-key-here' );

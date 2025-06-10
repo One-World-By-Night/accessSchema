@@ -1,7 +1,7 @@
 <?php
 
 // File: tools/_template/cpt.php
-// @version 1.0.5
+// @version 1.1.0
 // @author greghacke
 // @tool _template
 
