@@ -1,7 +1,7 @@
 <?php
 
 // File: tools/_template/render-ui.php
-// @version 1.1.0
+// @version 1.2.0
 // @author greghacke
 // @tool _template
 
