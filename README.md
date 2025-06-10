@@ -90,16 +90,16 @@ To use the client in your plugin:
 
 1. **Include the client file**:
 
-   \```php
+<pre>
    require_once plugin_dir_path(__FILE__) . 'includes/client/accessSchemaClient.php';
-   \```
+</pre>
 
 2. **Define your host and API key** (usually in `wp-config.php` or early in your plugin):
 
-   \```php
+<pre>
    define('ACCESS_SCHEMA_CLIENT_HOST', 'https://your-central-server.example.com');
    define('ACCESS_SCHEMA_CLIENT_API_KEY', 'your-api-key-goes-here');
-   \```
+</pre>
 
 ### API Functions
 
@@ -107,60 +107,60 @@ To use the client in your plugin:
 
 Register one or more role paths on the remote AccessSchema server.
 
-\```php
+<pre>
 $paths = [
     ['Chronicles', 'KONY', 'HST'],
     ['Chronicles', 'BETA', 'CM'],
 ];
 $response = accessSchema_client_register_paths($paths);
-\```
+</pre>
 
 #### `accessSchema_client_grant_role(int|string $user, string $role_path): bool`
 
 Grant a specific role to a user.
 
-\```php
+<pre>
 accessSchema_client_grant_role(42, 'Chronicles/KONY/CM');
 accessSchema_client_grant_role('user@example.com', 'Chronicles/BETA/HST');
-\```
+</pre>
 
 #### `accessSchema_client_revoke_role(int|string $user, string $role_path): bool`
 
 Revoke a previously granted role.
 
-\```php
+<pre>
 accessSchema_client_revoke_role(42, 'Chronicles/KONY/HST');
-\```
+</pre>
 
 #### `accessSchema_client_get_roles(int|string $user): array`
 
 Get all role paths for the user.
 
-\```php
+<pre>
 $roles = accessSchema_client_get_roles('user@example.com');
-\```
+</pre>
 
 #### `accessSchema_client_check_access(int|string $user, string $role_path, bool $include_children = false): bool`
 
 Check if a user has access to a given role path. If `$include_children` is true, child roles are matched as well.
 
-\```php
+<pre>
 if ( accessSchema_client_check_access(42, 'Chronicles/KONY', true) ) {
     echo 'Access granted.';
 } else {
     echo 'Access denied.';
 }
-\```
+</pre>
 
 ### Example: Display Section If Access Granted
 
-\```php
+<pre>
 if ( function_exists('accessSchema_client_check_access') ) {
     if ( accessSchema_client_check_access(get_current_user_id(), 'Coordinators/Brujah/Subcoordinator') ) {
         echo '<p>You may configure clan-level access here.</p>';
     }
 }
-\```
+</pre>
 
 ### Security
 
@@ -176,10 +176,10 @@ if ( function_exists('accessSchema_client_check_access') ) {
 2. Activate via WordPress Admin under *Plugins*  
 3. Add the following constants to your `wp-config.php`:
 
-```php
+<pre>
 define('ACCESS_SCHEMA_API_KEY', 'your-api-key-here');
 define('ACCESS_SCHEMA_LOG_LEVEL', 'INFO'); // DEBUG | INFO | WARN | ERROR
-```
+</pre>
 
 4. Navigate to **Users > Access Schema Roles** to begin managing your hierarchy
 
