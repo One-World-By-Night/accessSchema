@@ -1,6 +1,6 @@
 <?php
 // File: includes/render/render-admin.php
-// @version 1.0.1
+// @version 1.0.5
 // Author: greghacke
 
 defined( 'ABSPATH' ) || exit;

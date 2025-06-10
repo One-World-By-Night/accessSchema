@@ -1,7 +1,7 @@
 <?php
 
 // File: includes/admin/role-manager.php
-// @version 0.3.1
+// @version 1.0.5
 // Author: greghacke
 
 defined( 'ABSPATH' ) || exit;

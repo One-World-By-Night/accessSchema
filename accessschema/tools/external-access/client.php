@@ -1,6 +1,6 @@
 <?php
 // File: includes/external-access/client.php
-// @version 1.0.1
+// @version 1.0.5
 // Author: greghacke
 // Description: Calls an external WordPress site's accessSchema API from *another* WordPress instance.
 

@@ -1,6 +1,6 @@
 <?php
 // File: includes/core/activation.php
-// @version 0.2.0
+// @version 1.0.5
 // Author: greghacke
 
 defined( 'ABSPATH' ) || exit;
