@@ -1,6 +1,6 @@
 <?php
 // File: includes/core/user-roles.php
-// @version 1.0.5
+// @version 1.1.0
 // Author: greghacke
 
 defined( 'ABSPATH' ) || exit;

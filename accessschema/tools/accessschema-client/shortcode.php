@@ -1,49 +1,55 @@
 <?php
-// File: includes/shortcode/access.php
+// File: accessschema-client/shortcode.php
 // @version 1.1.0
 // Author: greghacke
 
 defined( 'ABSPATH' ) || exit;
 
-function accessSchema_shortcode_access($atts, $content = null) {
+/**
+ * [access_schema] shortcode for client-side remote validation.
+ *
+ * @param array $atts
+ * @param string|null $content
+ * @return string
+ */
+function accessSchema_client_shortcode_access($atts, $content = null) {
     if (!is_user_logged_in()) return '';
 
-    $user_id = get_current_user_id();
+    $user = wp_get_current_user();
 
     $atts = shortcode_atts([
         'role'     => '',       // Single role path (exact or pattern)
         'any'      => '',       // Comma-separated list of paths/patterns
-        'children' => 'false',  // true/false for subtree check on role
         'wildcard' => 'false',  // true/false for wildcard/glob mode
         'fallback' => '',       // Optional fallback if user doesn't match
     ], $atts, 'access_schema');
 
-    $children = filter_var($atts['children'], FILTER_VALIDATE_BOOLEAN);
     $wildcard = filter_var($atts['wildcard'], FILTER_VALIDATE_BOOLEAN);
 
     // If `any` is used, split it and match against patterns
     if (!empty($atts['any'])) {
         $patterns = array_map('trim', explode(',', $atts['any']));
-        if (accessSchema_user_matches_any($user_id, $patterns)) {
+        if (accessSchema_remote_user_matches_any($user->user_email, $patterns)) {
             return do_shortcode($content);
         }
         return $atts['fallback'] ?? '';
     }
 
-    // Else, use single `role` param
     $role = trim($atts['role']);
     if (!$role) return '';
 
     if ($wildcard) {
-        if (accessSchema_user_matches_role_pattern($user_id, $role)) {
+        if (accessSchema_roles_match_pattern_from_email($user->user_email, $role)) {
             return do_shortcode($content);
         }
     } else {
-        if (accessSchema_check_permission($user_id, $role, $children, false)) {
+        // Use the remote 'check' API for exact match
+        $granted = accessSchema_remote_check_access($user->user_email, $role, false);
+        if (!is_wp_error($granted) && $granted) {
             return do_shortcode($content);
         }
     }
 
     return $atts['fallback'] ?? '';
 }
-add_shortcode('access_schema', 'accessSchema_shortcode_access');
+add_shortcode('access_schema_client', 'accessSchema_client_shortcode_access');
