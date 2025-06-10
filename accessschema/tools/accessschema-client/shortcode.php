@@ -44,7 +44,7 @@ function accessSchema_client_shortcode_access($atts, $content = null) {
         }
     } else {
         // Use the remote 'check' API for exact match
-        $granted = accessSchema_remote_check_access($user->user_email, $role, false);
+        $granted = accessSchema_client_remote_check_access($user->user_email, $role, false);
         if (!is_wp_error($granted) && $granted) {
             return do_shortcode($content);
         }

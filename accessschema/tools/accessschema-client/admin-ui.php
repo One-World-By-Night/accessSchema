@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || exit;
 add_action('admin_menu', function () {
     add_users_page(
         'AccessSchema Settings',
-        'AS YourPlugin',        // <-- Change this per plugin context
+        'AS Your Plugin',        // <-- Change this per plugin context
         'manage_options',
         'accessschema-client',
         'accessSchema_client_render_admin_page'

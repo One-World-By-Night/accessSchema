@@ -10,9 +10,9 @@ defined('ABSPATH') || exit;
  * @param string|string[] $patterns A single string or array of wildcard patterns.
  * @return bool True if user matches at least one pattern.
  */
-function accessSchema_access_granted( $patterns ) {
+function accessSchema_client_access_granted( $patterns ) {
 	if ( ! is_user_logged_in() ) {
-		return apply_filters( 'accessSchema_access_granted', false, $patterns, 0 );
+		return apply_filters( 'accessSchema_client_access_granted', false, $patterns, 0 );
 	}
 
 	$user_id = get_current_user_id();
@@ -23,30 +23,30 @@ function accessSchema_access_granted( $patterns ) {
 		$patterns = array_map( 'trim', explode( ',', $patterns ) );
 	}
 	if ( ! is_array( $patterns ) || empty( $patterns ) ) {
-		return apply_filters( 'accessSchema_access_granted', false, $patterns, $user_id );
+		return apply_filters( 'accessSchema_client_access_granted', false, $patterns, $user_id );
 	}
 
-	$result = accessSchema_remote_user_matches_any( $user->user_email, $patterns );
+	$result = accessSchema_client_remote_user_matches_any( $user->user_email, $patterns );
 
-	return apply_filters( 'accessSchema_access_granted', $result, $patterns, $user_id );
+	return apply_filters( 'accessSchema_client_access_granted', $result, $patterns, $user_id );
 }
 
 /* Optional wrapper: deny logic as inversion of access_granted
  */
-function accessSchema_access_denied( $patterns ) {
-	return ! accessSchema_access_granted( $patterns );
+function accessSchema_client_access_denied( $patterns ) {
+	return ! accessSchema_client_access_granted( $patterns );
 }
 
 /* Check if remote user (by email) matches any of the given patterns.
  */
-function accessSchema_remote_user_matches_any( $email, array $patterns ) {
-	$response = accessSchema_remote_get_roles_by_email( $email );
+function accessSchema_client_remote_user_matches_any( $email, array $patterns ) {
+	$response = accessSchema_client_remote_get_roles_by_email( $email );
 	if ( is_wp_error( $response ) || empty( $response['roles'] ) ) {
 		return false;
 	}
 
 	foreach ( $patterns as $pattern ) {
-		if ( accessSchema_roles_match_pattern( $response['roles'], $pattern ) ) {
+		if ( accessSchema_client_roles_match_pattern( $response['roles'], $pattern ) ) {
 			return true;
 		}
 	}
@@ -56,8 +56,8 @@ function accessSchema_remote_user_matches_any( $email, array $patterns ) {
 
 /* Check if any role in the list matches the given pattern.
  */
-function accessSchema_roles_match_pattern( array $roles, $pattern ) {
-	$regex = accessSchema_pattern_to_regex( $pattern );
+function accessSchema_client_roles_match_pattern( array $roles, $pattern ) {
+	$regex = accessSchema_client_pattern_to_regex( $pattern );
 
 	foreach ( $roles as $role ) {
 		if ( preg_match( $regex, $role ) ) {
@@ -70,7 +70,7 @@ function accessSchema_roles_match_pattern( array $roles, $pattern ) {
 
 /* Convert a wildcard pattern to a full regex.
  */
-function accessSchema_pattern_to_regex( $pattern ) {
+function accessSchema_client_pattern_to_regex( $pattern ) {
 	$escaped = preg_quote( $pattern, '#' );
 	$regex   = str_replace(
 		['\*\*', '\*'],
@@ -83,10 +83,10 @@ function accessSchema_pattern_to_regex( $pattern ) {
 /* Check if remote user (by email) matches a single role pattern.
  * This is a convenience function for client-side usage.
  */
-function accessSchema_roles_match_pattern_from_email($email, $pattern) {
+function accessSchema_client_roles_match_pattern_from_email($email, $pattern) {
     $roles = accessSchema_remote_get_roles_by_email($email);
     if (is_wp_error($roles) || empty($roles['roles'])) {
         return false;
     }
-    return accessSchema_roles_match_pattern($roles['roles'], $pattern);
+    return accessSchema_client_roles_match_pattern($roles['roles'], $pattern);
 }
