@@ -55,7 +55,7 @@ Use the following utility functions in your code:
 
 // Check access for a remote user
 ```php
-accessSchema_remote_check_access( 'user@example.com', 'Chronicles/ABC/HST' );
+accessSchema_client_remote_check_access( 'user@example.com', 'Chronicles/ABC/HST' );
 
 // Grant a role to a user remotely
 ```php
