@@ -1,7 +1,20 @@
 <?php
 // File: includes/core/webhook-router.php
-// @version 0.2.0
+// @version 1.0.5
 // Author: greghacke
+// Required for REST API routes to handle access schema operations
+/**
+ * Access Schema REST API Routes
+ *
+ * This file defines the REST API endpoints for managing access schema roles and permissions.
+ * It includes endpoints for registering roles, granting/revoking roles to/from users,
+ * checking user permissions, and handling CORS preflight requests.
+ * 
+ * Use of the API required a shared API key defined in the wp-config.php file:
+ * define('ACCESSSCHEMA_API_KEY_RO', 'your_api_ro_key_here');
+ * define('ACCESSSCHEMA_API_KEY_RW', 'your_api_rw_key_here'); // Optional, for read-write access
+ */
+
 
 if (!defined('ABSPATH')) exit;
 
@@ -52,12 +65,35 @@ add_action('rest_api_init', function () {
 // --- Shared API Key Auth ---
 function accessSchema_api_permission_check($request) {
     $api_key = $request->get_header('x-api-key');
-    $expected_key = defined('ACCESSSCHEMA_API_KEY') ? ACCESSSCHEMA_API_KEY : '';
+    $route   = $request->get_route();
 
-    if (!$api_key || $api_key !== $expected_key) {
-        return new WP_Error('unauthorized', 'Invalid or missing API key', ['status' => 403]);
+    $read_key  = defined('ACCESSSCHEMA_API_KEY_READONLY') ? ACCESSSCHEMA_API_KEY_READONLY : '';
+    $write_key = defined('ACCESSSCHEMA_API_KEY_READWRITE') ? ACCESSSCHEMA_API_KEY_READWRITE : '';
+
+    // Read-only endpoints
+    $read_endpoints = [
+        '/access-schema/v1/roles',
+        '/access-schema/v1/check'
+    ];
+
+    // Read-write endpoints
+    $write_endpoints = [
+        '/access-schema/v1/register',
+        '/access-schema/v1/grant',
+        '/access-schema/v1/revoke',
+    ];
+
+    if (in_array($route, $read_endpoints)) {
+        if ($api_key === $read_key || $api_key === $write_key) {
+            return true;
+        }
+    } elseif (in_array($route, $write_endpoints)) {
+        if ($api_key === $write_key) {
+            return true;
+        }
     }
-    return true;
+
+    return new WP_Error('unauthorized', 'Invalid or missing API key for this operation', ['status' => 403]);
 }
 
 // --- Helper: Resolve User ---

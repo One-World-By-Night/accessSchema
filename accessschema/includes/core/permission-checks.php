@@ -1,6 +1,6 @@
 <?php
 // File: includes/core/permission-checks.php
-// @version 1.0.1
+// @version 1.0.5
 // Author: greghacke
 
 defined( 'ABSPATH' ) || exit;
