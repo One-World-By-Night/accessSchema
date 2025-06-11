@@ -1,6 +1,6 @@
 <?php
 // File: accessschema-client/hooks.php
-// @version 1.2.0
+// @version 1.2.1
 // @tool accessschema-client
 
 defined('ABSPATH') || exit;
