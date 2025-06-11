@@ -1,7 +1,7 @@
 <?php
 
 // File: tools/_template/fields.php
-// @version 1.2.1
+// @version 1.3.0
 // @author greghacke
 // @tool _template
 
