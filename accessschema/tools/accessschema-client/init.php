@@ -1,6 +1,6 @@
 <?php
 // File: accessschema-client/init.php
-// @version 1.2.1
+// @version 1.3.0
 // Author: greghacke
 // @tool accessschema-client
 
@@ -8,6 +8,7 @@ if (!defined('ABSPATH')) exit;
 
 // Include required components
 require_once __DIR__ . '/admin-ui.php';
+require_once __DIR__ . '/admin-users.php';
 require_once __DIR__ . '/cache.php';
 require_once __DIR__ . '/cpt.php';
 require_once __DIR__ . '/fields.php';

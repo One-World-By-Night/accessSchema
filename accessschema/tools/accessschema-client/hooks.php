@@ -1,6 +1,6 @@
 <?php
 // File: accessschema-client/hooks.php
-// @version 1.2.1
+// @version 1.3.0
 // @tool accessschema-client
 
 defined('ABSPATH') || exit;
@@ -57,7 +57,7 @@ function accessSchema_client_remote_post($endpoint, array $body) {
     return $data;
 }
 
-/* Get remote roles for a user by email.
+/* * Get remote roles for a user by email (with caching).
  */
 function accessSchema_client_remote_get_roles_by_email($email) {
     $user = get_user_by('email', $email);
@@ -74,9 +74,10 @@ function accessSchema_client_remote_get_roles_by_email($email) {
         'email' => sanitize_email($email)
     ]);
 
-    // If successful and user exists, cache it
+    // If successful and user exists, cache it with timestamp
     if (!is_wp_error($response) && isset($response['roles']) && $user) {
         update_user_meta($user->ID, 'accessschema_cached_roles', $response['roles']);
+        update_user_meta($user->ID, 'accessschema_cached_roles_timestamp', time());
     }
 
     return $response;
