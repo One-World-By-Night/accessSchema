@@ -1,6 +1,6 @@
 <?php
 // File: accessschema-client/init.php
-// @version 1.2.0
+// @version 1.2.1
 // Author: greghacke
 // @tool accessschema-client
 

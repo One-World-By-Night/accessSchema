@@ -2,7 +2,7 @@
 /**
  * Plugin Name: accessSchema
  * Description: Manage Role-based access schema plugin with audit logging and REST API support.
- * Version: 1.1.0
+ * Version: 1.2.1
  * Author: greghacke
  * Author URI: https://www.owbn.net
  * Text Domain: accessschema
