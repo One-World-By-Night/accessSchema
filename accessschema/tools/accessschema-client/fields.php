@@ -1,7 +1,7 @@
 <?php
 
 // File: accessschema-client/fields.php
-// @version 1.3.0
+// @version 1.4.0
 // @tool accessschema-client
 
 defined( 'ABSPATH' ) || exit;
