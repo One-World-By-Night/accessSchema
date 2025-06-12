@@ -1,6 +1,6 @@
 <?php
 // File: accessschema-client/shortcode.php
-// @version 1.3.0
+// @version 1.4.0
 // Author: greghacke
 
 defined( 'ABSPATH' ) || exit;

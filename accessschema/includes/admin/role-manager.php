@@ -1,7 +1,7 @@
 <?php
 
 // File: includes/admin/role-manager.php
-// @version 1.3.0
+// @version 1.4.0
 // Author: greghacke
 
 defined( 'ABSPATH' ) || exit;
@@ -76,24 +76,54 @@ function accessSchema_render_registered_roles_table() {
 
     $table      = $wpdb->prefix . 'access_roles';
     $per_page   = 25;
-    $page = isset($_GET['paged']) ? max(1, intval(sanitize_text_field(wp_unslash($_GET['paged'])))) : 1; // // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Sanitized later
+    $page       = isset($_GET['paged']) ? max(1, intval(sanitize_text_field(wp_unslash($_GET['paged'])))) : 1;
     $offset     = ($page - 1) * $per_page;
-    $total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM `" . esc_sql($table) . "`" );
+    $filter     = isset($_GET['filter']) ? sanitize_text_field(wp_unslash($_GET['filter'])) : '';
+    $like       = '%' . $wpdb->esc_like($filter) . '%';
+
+    // Count total rows
+    if ($filter) {
+        $total = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM `" . esc_sql($table) . "` WHERE full_path LIKE %s",
+                $like
+            )
+        );
+    } else {
+        $total = (int) $wpdb->get_var("SELECT COUNT(*) FROM `" . esc_sql($table) . "`");
+    }
+
     $total_pages = ceil($total / $per_page);
 
-    $roles = $wpdb->get_results(
-        $wpdb->prepare(
-            "SELECT id, name, full_path FROM `" . esc_sql($table) . "` ORDER BY full_path LIMIT %d OFFSET %d",
-            $per_page,
-            $offset
-        ),
-        ARRAY_A
-    );
+    // Fetch rows with optional filter
+    if ($filter) {
+        $roles = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT id, name, full_path FROM `" . esc_sql($table) . "` WHERE full_path LIKE %s ORDER BY full_path LIMIT %d OFFSET %d",
+                $like,
+                $per_page,
+                $offset
+            ),
+            ARRAY_A
+        );
+    } else {
+        $roles = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT id, name, full_path FROM `" . esc_sql($table) . "` ORDER BY full_path LIMIT %d OFFSET %d",
+                $per_page,
+                $offset
+            ),
+            ARRAY_A
+        );
+    }
 
     echo '<h2>Registered Roles</h2>';
-    echo '<input type="text" id="accessSchema-role-filter" placeholder="Filter by Full Path..." style="margin-bottom:10px;width:100%;padding:6px;">';
+    echo '<form method="get" style="margin-bottom:10px;">';
+    echo '<input type="hidden" name="page" value="accessSchema-roles">';
+    echo '<input type="text" name="filter" placeholder="Filter by Full Path..." value="' . esc_attr($filter) . '" style="width:100%;padding:6px;">';
+    echo '</form>';
 
-    if ( empty( $roles ) ) {
+    if (empty($roles)) {
         echo '<p>No roles registered.</p>';
         return;
     }
@@ -102,50 +132,58 @@ function accessSchema_render_registered_roles_table() {
     echo '<thead><tr><th>Name</th><th>Full Path</th><th>Actions</th></tr></thead>';
     echo '<tbody>';
 
-    foreach ( $roles as $role ) {
+    foreach ($roles as $role) {
         echo '<tr>';
-        echo '<td>' . esc_html( $role['name'] ) . '</td>';
-        echo '<td class="role-path">' . esc_html( $role['full_path'] ) . '</td>';
+        echo '<td>' . esc_html($role['name']) . '</td>';
+        echo '<td class="role-path">' . esc_html($role['full_path']) . '</td>';
         echo '<td>';
-        $child_count = (int) $wpdb->get_var( $wpdb->prepare(
-            "SELECT COUNT(*) FROM `" . esc_sql( $table ) . "` WHERE parent_id = %d",
-            $role['id']
-        ) );
+        $child_count = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM `" . esc_sql($table) . "` WHERE parent_id = %d",
+                $role['id']
+            )
+        );
 
-        if ( $child_count > 0 ) {
+        if ($child_count > 0) {
             $confirm_url = add_query_arg([
                 'page' => 'accessSchema-roles',
                 'confirm_delete' => $role['id'],
                 'has_children' => 1,
-                'accessSchema_confirm_delete_nonce' => wp_create_nonce('accessSchema_confirm_delete_action')
-            ], admin_url( 'users.php' ));
+                'accessSchema_confirm_delete_nonce' => wp_create_nonce('accessSchema_confirm_delete_action'),
+                'filter' => $filter,
+                'paged' => $page,
+            ], admin_url('users.php'));
 
-            echo '<a href="' . esc_url( $confirm_url ) . '" class="button button-small button-warning">Delete (Has Children)</a>';
+            echo '<a href="' . esc_url($confirm_url) . '" class="button button-small button-warning">Delete (Has Children)</a>';
         } else {
             echo '<form method="POST" style="display:inline;">';
-            echo '<input type="hidden" name="accessSchema_delete_role_id" value="' . esc_attr( $role['id'] ) . '">';
-            wp_nonce_field( 'accessSchema_delete_role_action', 'accessSchema_delete_role_nonce' );
+            echo '<input type="hidden" name="accessSchema_delete_role_id" value="' . esc_attr($role['id']) . '">';
+            wp_nonce_field('accessSchema_delete_role_action', 'accessSchema_delete_role_nonce');
             echo '<button type="submit" class="button button-small button-danger">Delete</button>';
             echo '</form>';
         }
-        echo ' <button class="button button-small accessSchema-edit-role" data-id="' . esc_attr( $role['id'] ) . '" data-name="' . esc_attr( $role['name'] ) . '" data-path="' . esc_attr( $role['full_path'] ) . '">Edit</button>';
+
+        echo ' <button class="button button-small accessSchema-edit-role" data-id="' . esc_attr($role['id']) . '" data-name="' . esc_attr($role['name']) . '" data-path="' . esc_attr($role['full_path']) . '">Edit</button>';
         echo '</td>';
         echo '</tr>';
     }
 
     echo '</tbody></table>';
 
-    // Pagination Links
+    // Pagination links
     echo '<div style="margin-top: 1em;">';
     echo '<div class="tablenav-pages">';
-    if ( $total_pages > 1 ) {
-        for ( $i = 1; $i <= $total_pages; $i++ ) {
+    if ($total_pages > 1) {
+        for ($i = 1; $i <= $total_pages; $i++) {
             $current = $i === $page ? ' style="font-weight:bold;"' : '';
             printf(
                 '<a href="%s"%s class="page-numbers">%s</a> ',
-                esc_url( add_query_arg( 'paged', $i ) ),
-                esc_attr( $current ),
-                esc_html( $i )
+                esc_url(add_query_arg([
+                    'paged' => $i,
+                    'filter' => $filter,
+                ])),
+                esc_attr($current),
+                esc_html($i)
             );
         }
     }
