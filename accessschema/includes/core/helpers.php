@@ -1,6 +1,6 @@
 <?php
 // File: includes/core/helpers.php
-// @version 1.4.0
+// @version 1.5.0
 // Author: greghacke
 
 // File: includes/core/helpers.php
