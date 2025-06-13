@@ -1,22 +1,31 @@
 <?php
 
 // File: accessschema-client/render-admin.php
-// @version 1.4.0
-// @author greghacke
+// @version 1.5.0
 // @tool accessschema-client
 
 defined( 'ABSPATH' ) || exit;
 
 function accessSchema_client_render_admin_page() {
+    $mode = get_option( 'accessschema_mode', 'remote' );
     ?>
+
     <div class="wrap">
-        <h1>AccessSchema Remote Client</h1>
+        <h1>AccessSchema Client (<?php echo esc_html( ucfirst( $mode ) ); ?> Mode)</h1>
 
         <!-- Settings Form -->
         <form method="post" action="options.php">
             <?php
-            settings_fields('accessschema_client');
-            do_settings_sections('accessschema-client');
+            settings_fields( 'accessschema_client' );
+
+            // Always show mode selector section
+            do_settings_sections( 'accessschema-client' );
+
+            // If in remote mode, show the remote fields section
+            if ( $mode === 'remote' ) {
+                do_settings_sections( 'accessschema-client' ); // Both sections use same page slug
+            }
+
             submit_button();
             ?>
         </form>
@@ -75,9 +84,9 @@ function accessSchema_client_render_user_cache_view( $user ) {
         'refresh_accessschema_' . $user->ID
     );
 
-    if ( isset($_GET['message']) && $_GET['message'] === 'accessschema_cache_flushed' ) {
+    if ( isset( $_GET['message'] ) && $_GET['message'] === 'accessschema_cache_flushed' ) {
         echo '<div class="notice notice-success is-dismissible"><p>AccessSchema cache flushed.</p></div>';
-    } elseif ( isset($_GET['message']) && $_GET['message'] === 'accessschema_cache_refreshed' ) {
+    } elseif ( isset( $_GET['message'] ) && $_GET['message'] === 'accessschema_cache_refreshed' ) {
         echo '<div class="notice notice-success is-dismissible"><p>AccessSchema cache refreshed.</p></div>';
     }
 

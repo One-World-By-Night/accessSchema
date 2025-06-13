@@ -1,6 +1,6 @@
 <?php
 // File: includes/core/webhook-router.php
-// @version 1.4.0
+// @version 1.5.0
 // Author: greghacke
 // Required for REST API routes to handle access schema operations
 /**

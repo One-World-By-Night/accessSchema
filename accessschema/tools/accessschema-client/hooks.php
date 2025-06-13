@@ -1,9 +1,15 @@
 <?php
 // File: accessschema-client/hooks.php
-// @version 1.4.0
+// @version 1.5.0
 // @tool accessschema-client
 
 defined('ABSPATH') || exit;
+
+/* Helper function to check if AccessSchema is in remote mode.
+ */
+function accessSchema_is_remote_mode() {
+    return get_option('accessschema_mode', 'remote') === 'remote';
+}
 
 /* Get the stored remote AccessSchema URL.
  */
@@ -62,6 +68,19 @@ function accessSchema_client_remote_post($endpoint, array $body) {
 function accessSchema_client_remote_get_roles_by_email($email) {
     $user = get_user_by('email', $email);
 
+    if (!accessSchema_is_remote_mode()) {
+        if (!$user) {
+            return new WP_Error('user_not_found', 'User not found.', ['status' => 404]);
+        }
+
+        $response = accessSchema_client_local_post('roles', [
+            'email' => sanitize_email($email),
+        ]);
+
+        return $response;
+    }
+
+    // REMOTE MODE – check cache first
     if ($user) {
         $cached = get_user_meta($user->ID, 'accessschema_cached_roles', true);
         if (!empty($cached) && is_array($cached)) {
@@ -69,12 +88,11 @@ function accessSchema_client_remote_get_roles_by_email($email) {
         }
     }
 
-    // Fallback to remote call
+    // Fall back to external API
     $response = accessSchema_client_remote_post('roles', [
-        'email' => sanitize_email($email)
+        'email' => sanitize_email($email),
     ]);
 
-    // If successful and user exists, cache it with timestamp
     if (!is_wp_error($response) && isset($response['roles']) && $user) {
         update_user_meta($user->ID, 'accessschema_cached_roles', $response['roles']);
         update_user_meta($user->ID, 'accessschema_cached_roles_timestamp', time());
@@ -86,15 +104,23 @@ function accessSchema_client_remote_get_roles_by_email($email) {
 /* Grant a role to a user on the remote system.
  */
 function accessSchema_client_remote_grant_role($email, $role_path) {
-    $result = accessSchemaclient_remote_post('grant', [
+    $user = get_user_by('email', $email);
+
+    $payload = [
         'email'     => sanitize_email($email),
         'role_path' => sanitize_text_field($role_path),
-    ]);
+    ];
 
-    // Invalidate cache
-    $user = get_user_by('email', $email);
+    if (!accessSchema_is_remote_mode()) {
+        $result = accessSchema_client_local_post('grant', $payload);
+    } else {
+        $result = accessSchema_client_remote_post('grant', $payload);
+    }
+
+    // Invalidate cache in both modes
     if ($user) {
         delete_user_meta($user->ID, 'accessschema_cached_roles');
+        delete_user_meta($user->ID, 'accessschema_cached_roles_timestamp');
     }
 
     return $result;
@@ -103,19 +129,27 @@ function accessSchema_client_remote_grant_role($email, $role_path) {
 /* Revoke a role to a user on the remote system.
  */
 function accessSchema_client_remote_revoke_role($email, $role_path) {
-    $result = accessSchema_client_remote_post('revoke', [
+    $user = get_user_by('email', $email);
+
+    $payload = [
         'email'     => sanitize_email($email),
         'role_path' => sanitize_text_field($role_path),
-    ]);
+    ];
 
-    $user = get_user_by('email', $email);
+    if (!accessSchema_is_remote_mode()) {
+        $result = accessSchema_client_local_post('revoke', $payload);
+    } else {
+        $result = accessSchema_client_remote_post('revoke', $payload);
+    }
+
+    // Invalidate cache in both modes
     if ($user) {
         delete_user_meta($user->ID, 'accessschema_cached_roles');
+        delete_user_meta($user->ID, 'accessschema_cached_roles_timestamp');
     }
 
     return $result;
 }
-
 /* Refresh roles for a user by fetching from remote.
  *
  * @param WP_User $user The user object.
@@ -124,29 +158,70 @@ function accessSchema_client_remote_revoke_role($email, $role_path) {
 function accessSchema_refresh_roles_for_user($user) {
     if ($user instanceof WP_User) {
         $email = $user->user_email;
-        $roles = accessSchema_client_remote_post('roles', ['email' => sanitize_email($email)]);
+
+        // This call routes to remote or local depending on mode
+        $roles = accessSchema_client_get_roles_by_email($email);
+
         if (!is_wp_error($roles) && isset($roles['roles'])) {
             update_user_meta($user->ID, 'accessschema_cached_roles', $roles['roles']);
+            update_user_meta($user->ID, 'accessschema_cached_roles_timestamp', time());
             return $roles;
         }
     }
+
     return new WP_Error('refresh_failed', 'Could not refresh roles.');
 }
 
 /* Check if user has role or descendant.
  */
 function accessSchema_client_remote_check_access($email, $role_path, $include_children = true) {
-    $response = accessSchema_client_remote_post('check', [
+    $payload = [
         'email'            => sanitize_email($email),
         'role_path'        => sanitize_text_field($role_path),
         'include_children' => $include_children,
-    ]);
+    ];
 
-    if (is_wp_error($response)) {
+    if (!accessSchema_is_remote_mode()) {
+        $data = accessSchema_client_local_post('check', $payload);
+    } else {
+        $data = accessSchema_client_remote_post('check', $payload);
+    }
+
+    if (is_wp_error($data)) {
+        return $data;
+    }
+
+    return !empty($data['granted']);
+}
+
+// * Local API endpoint handler for client-side requests.
+ *
+ * @param string $endpoint The endpoint to call (e.g., 'roles', 'grant', 'revoke', 'check').
+ * @param array $body The request body parameters.
+ * @return array|WP_Error The response data or error.
+ */
+function accessSchema_client_local_post($endpoint, array $body) {
+    $request = new WP_REST_Request('POST', '/access-schema/v1/' . ltrim($endpoint, '/'));
+    $request->set_body_params($body);
+
+    $function_map = [
+        'roles'  => 'accessSchema_api_get_roles',
+        'grant'  => 'accessSchema_api_grant_role',
+        'revoke' => 'accessSchema_api_revoke_role',
+        'check'  => 'accessSchema_api_check_permission',
+    ];
+
+    if (!isset($function_map[$endpoint])) {
+        return new WP_Error('invalid_local_endpoint', 'Unrecognized local endpoint.');
+    }
+
+    $response = call_user_func($function_map[$endpoint], $request);
+
+    if ($response instanceof WP_Error) {
         return $response;
     }
 
-    return !empty($response['granted']);
+    return $response->get_data();
 }
 
 do_action('accessSchema_client_ready');
