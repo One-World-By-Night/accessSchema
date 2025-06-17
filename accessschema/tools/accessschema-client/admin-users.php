@@ -1,99 +1,144 @@
 <?php
 // File: accessschema-client/admin-users.php
-// @version 1.5.0
+// @version 1.6.0
 // @tool accessschema-client
 
-/* * Add AccessSchema roles column to the Users admin page.
- * This will display the roles fetched from the remote AccessSchema API.
+defined('ABSPATH') || exit;
+
+/**
+ * Add a single unified AccessSchema roles column to Users table.
  */
 add_filter('manage_users_columns', function ($columns) {
     $columns['accessschema_roles'] = 'AccessSchema Roles';
     return $columns;
 });
 
-/* * Display AccessSchema roles in the custom column.
- * This will show the cached roles and a link to flush the cache.
+/**
+ * Render minimal cache summary for each registered AccessSchema slug.
  */
 add_filter('manage_users_custom_column', function ($output, $column_name, $user_id) {
     if ($column_name !== 'accessschema_roles') return $output;
 
-    $roles     = get_user_meta($user_id, 'accessschema_cached_roles', true);
-    $timestamp = get_user_meta($user_id, 'accessschema_cached_roles_timestamp', true);
+    $registered_slugs = apply_filters('accessschema_registered_slugs', []);
+    if (empty($registered_slugs)) return '[No plugins registered]';
 
-    // Base admin URL
     $base_url = admin_url('users.php');
+    $output = '<div class="accessschema-role-column">';
 
-    if (!is_array($roles) || empty($roles)) {
-        // No roles → show [Request] link
-        $request_url = wp_nonce_url(
+    foreach ($registered_slugs as $slug => $label) {
+        $cache_key     = "{$slug}_accessschema_cached_roles";
+        $timestamp_key = "{$slug}_accessschema_cached_roles_timestamp";
+
+        $roles     = get_user_meta($user_id, $cache_key, true);
+        $timestamp = get_user_meta($user_id, $timestamp_key, true);
+
+        $flush_url = wp_nonce_url(
             add_query_arg([
-                'action'  => 'refresh_accessschema_cache',
-                'user_id' => $user_id,
+                'action'   => 'flush_accessschema_cache',
+                'user_id'  => $user_id,
+                'slug'     => $slug,
             ], $base_url),
-            'refresh_accessschema_' . $user_id
+            "flush_accessschema_{$user_id}_{$slug}"
         );
 
-        return '[None] <a href="' . esc_url($request_url) . '" style="margin-left:4px;">[Request]</a>';
+        $refresh_url = wp_nonce_url(
+            add_query_arg([
+                'action'   => 'refresh_accessschema_cache',
+                'user_id'  => $user_id,
+                'slug'     => $slug,
+            ], $base_url),
+            "refresh_accessschema_{$user_id}_{$slug}"
+        );
+
+        $output .= "<div><strong>" . esc_html($label) . ":</strong> ";
+
+        if (!is_array($roles) || empty($roles)) {
+            $output .= "[None] <a href='" . esc_url($refresh_url) . "'>[Request]</a>";
+        } else {
+            $time_display = $timestamp
+                ? date_i18n('m/d/Y h:i a', intval($timestamp))
+                : '[Unknown]';
+
+            $output .= esc_html($time_display)
+                . " <a href='" . esc_url($flush_url) . "'>[Flush]</a>"
+                . " <a href='" . esc_url($refresh_url) . "'>[Refresh]</a>";
+        }
+
+        $output .= "</div>";
     }
 
-    // If roles exist → show timestamp and flush/refresh links
-    $time_display = $timestamp
-        ? date_i18n('m/d/Y h:i a', intval($timestamp))
-        : '[Unknown]';
-
-    $flush_url = wp_nonce_url(
-        add_query_arg([
-            'action'  => 'flush_accessschema_cache',
-            'user_id' => $user_id,
-        ], $base_url),
-        'flush_accessschema_' . $user_id
-    );
-
-    $refresh_url = wp_nonce_url(
-        add_query_arg([
-            'action'  => 'refresh_accessschema_cache',
-            'user_id' => $user_id,
-        ], $base_url),
-        'refresh_accessschema_' . $user_id
-    );
-
-    return esc_html($time_display) .
-        ' <a href="' . esc_url($flush_url) . '" style="margin-left:4px;">[Flush]</a>' .
-        ' <a href="' . esc_url($refresh_url) . '" style="margin-left:4px;">[Refresh]</a>';
+    $output .= '</div>';
+    return $output;
 }, 10, 3);
 
-/* * Handle the actions for flushing and refreshing AccessSchema roles cache.
- * This will process the requests from the custom links in the roles column.
+/**
+ * Handle flush and refresh actions scoped to each plugin slug.
  */
 add_action('admin_init', function () {
     if (
-        isset($_GET['action'], $_GET['user_id']) &&
+        isset($_GET['action'], $_GET['user_id'], $_GET['slug']) &&
         current_user_can('manage_options')
     ) {
         $user_id = intval($_GET['user_id']);
+        $slug    = sanitize_key($_GET['slug']);
+
+        $cache_key     = "{$slug}_accessschema_cached_roles";
+        $timestamp_key = "{$slug}_accessschema_cached_roles_timestamp";
 
         if ($_GET['action'] === 'flush_accessschema_cache') {
-            check_admin_referer('flush_accessschema_' . $user_id);
-            delete_user_meta($user_id, 'accessschema_cached_roles');
-            delete_user_meta($user_id, 'accessschema_cached_roles_timestamp');
+            check_admin_referer("flush_accessschema_{$user_id}_{$slug}");
+
+            delete_user_meta($user_id, $cache_key);
+            delete_user_meta($user_id, $timestamp_key);
+
             wp_redirect(add_query_arg(['message' => 'accessschema_cache_flushed'], admin_url('users.php')));
             exit;
         }
 
         if ($_GET['action'] === 'refresh_accessschema_cache') {
-            check_admin_referer('refresh_accessschema_' . $user_id);
+            check_admin_referer("refresh_accessschema_{$user_id}_{$slug}");
 
             $user = get_user_by('ID', $user_id);
             if ($user) {
-                $roles_data = accessSchema_client_remote_get_roles_by_email($user->user_email);
-                if (!is_wp_error($roles_data) && isset($roles_data['roles'])) {
-                    update_user_meta($user_id, 'accessschema_cached_roles', $roles_data['roles']);
-                    update_user_meta($user_id, 'accessschema_cached_roles_timestamp', time());
+                $result = apply_filters('accessschema_client_refresh_roles', null, $user, $slug);
+
+                if (is_array($result) && isset($result['roles'])) {
+                    update_user_meta($user_id, $cache_key, $result['roles']);
+                    update_user_meta($user_id, $timestamp_key, time());
+
+                    wp_redirect(add_query_arg(['message' => 'accessschema_cache_refreshed'], admin_url('users.php')));
+                    exit;
                 }
             }
 
-            wp_redirect(add_query_arg(['message' => 'accessschema_cache_refreshed'], admin_url('users.php')));
+            wp_redirect(add_query_arg(['message' => 'accessschema_cache_failed'], admin_url('users.php')));
             exit;
         }
+    }
+});
+
+/**
+ * Show admin notice after flush or refresh.
+ */
+add_action('admin_notices', function () {
+    if (!isset($_GET['message'])) return;
+
+    $message = sanitize_text_field($_GET['message']);
+    $notice = '';
+
+    switch ($message) {
+        case 'accessschema_cache_flushed':
+            $notice = 'AccessSchema role cache flushed.';
+            break;
+        case 'accessschema_cache_refreshed':
+            $notice = 'AccessSchema role cache refreshed.';
+            break;
+        case 'accessschema_cache_failed':
+            $notice = 'Failed to refresh AccessSchema roles. Check plugin hook or API response.';
+            break;
+    }
+
+    if ($notice) {
+        echo '<div class="notice notice-info is-dismissible"><p>' . esc_html($notice) . '</p></div>';
     }
 });

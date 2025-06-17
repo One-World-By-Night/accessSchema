@@ -1,7 +1,7 @@
 <?php
 
 // File: includes/admin/role-manager.php
-// @version 1.5.0
+// @version 1.6.0
 // Author: greghacke
 
 defined( 'ABSPATH' ) || exit;
@@ -56,7 +56,7 @@ function accessSchema_render_role_manager_page() {
                     <td>
                         <textarea name="full_paths" id="full_paths" rows="6" style="width: 100%;" placeholder="Example: Coordinators/Brujah/Subcoordinator"><?php echo isset( $_POST['full_paths'] ) ? esc_textarea( sanitize_textarea_field( wp_unslash( $_POST['full_paths'] ) ) ) : ''; ?></textarea>
                         <p class="description">Enter one full role path per line using <code>/</code> between each level.<br>
-                        Example: <code>Chronicle/KONY/HST</code></p>
+                        Example: <code>Chronicles/KONY/HST</code></p>
                     </td>
                 </tr>
             </table>
