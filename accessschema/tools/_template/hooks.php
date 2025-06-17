@@ -1,7 +1,7 @@
 <?php
 
 // File: tools/_template/hooks.php
-// @version 1.5.0
+// @version 1.6.0
 // @author greghacke
 // @tool _template
 

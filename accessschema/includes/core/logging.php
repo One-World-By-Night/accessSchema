@@ -1,6 +1,6 @@
 <?php
 // File: includes/core/logging.php
-// @version 1.5.0
+// @version 1.6.0
 // Author: greghacke
 
 defined( 'ABSPATH' ) || exit;
