@@ -67,8 +67,14 @@ function accessSchema_api_permission_check($request) {
     $api_key = $request->get_header('x-api-key');
     $route   = $request->get_route();
 
-    $read_key  = defined('ACCESSSCHEMA_API_KEY_READONLY') ? ACCESSSCHEMA_API_KEY_READONLY : '';
-    $write_key = defined('ACCESSSCHEMA_API_KEY_READWRITE') ? ACCESSSCHEMA_API_KEY_READWRITE : '';
+    // Use options instead of constants for better security
+    $read_key  = get_option('accessschema_api_key_readonly', '');
+    $write_key = get_option('accessschema_api_key_readwrite', '');
+    
+    // Add rate limiting check
+    if (!accessSchema_check_rate_limit($request->get_header('x-forwarded-for') ?: $_SERVER['REMOTE_ADDR'])) {
+        return new WP_Error('rate_limited', 'Too many requests', ['status' => 429]);
+    }
 
     // Read-only endpoints
     $read_endpoints = [
@@ -94,6 +100,24 @@ function accessSchema_api_permission_check($request) {
     }
 
     return new WP_Error('unauthorized', 'Invalid or missing API key for this operation', ['status' => 403]);
+}
+
+// Helper: Rate Limiting
+function accessSchema_check_rate_limit($ip) {
+    $transient_key = 'accessschema_rate_' . md5($ip);
+    $attempts = get_transient($transient_key);
+    
+    if ($attempts === false) {
+        set_transient($transient_key, 1, 60); // 1 minute window
+        return true;
+    }
+    
+    if ($attempts > 60) { // 60 requests per minute
+        return false;
+    }
+    
+    set_transient($transient_key, $attempts + 1, 60);
+    return true;
 }
 
 // --- Helper: Resolve User ---

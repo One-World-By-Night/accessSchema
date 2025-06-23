@@ -39,13 +39,32 @@ function accessSchema_activate() {
         name VARCHAR(191) NOT NULL,
         full_path VARCHAR(767) NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        depth TINYINT UNSIGNED DEFAULT 0,
         UNIQUE KEY unique_name_per_parent (name, parent_id),
         UNIQUE KEY unique_full_path (full_path),
         KEY idx_parent_id (parent_id),
-        KEY idx_name (name)
+        KEY idx_name (name),
+        KEY idx_depth (depth),
+        KEY idx_full_path_prefix (full_path(191))
     ) $charset_collate;
     ";
     dbDelta( $sql2 );
+
+    // Also add user roles junction table
+    $user_roles_table = $wpdb->prefix . 'access_user_roles';
+    $sql3 = "
+    CREATE TABLE $user_roles_table (
+        user_id BIGINT UNSIGNED NOT NULL,
+        role_id BIGINT UNSIGNED NOT NULL,
+        granted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        granted_by BIGINT UNSIGNED,
+        PRIMARY KEY (user_id, role_id),
+        KEY idx_role_id (role_id),
+        KEY idx_granted_at (granted_at)
+    ) $charset_collate;
+    ";
+    dbDelta($sql3);    
 }
 
 /** accessSchema_db_operation 

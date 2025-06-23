@@ -7,7 +7,7 @@ defined( 'ABSPATH' ) || exit;
 
 // Setting default log level
 function accessSchema_get_log_level() {
-    $level = defined('ACCESS_SCHEMA_LOG_LEVEL') ? ACCESS_SCHEMA_LOG_LEVEL : 'INFO';
+    $level = get_option('accessschema_log_level', 'INFO');
     return apply_filters('access_schema_log_level', $level);
 }
 
