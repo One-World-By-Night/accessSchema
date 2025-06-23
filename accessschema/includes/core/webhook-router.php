@@ -266,8 +266,8 @@ function accessSchema_resolve_user($params) {
         return null;
     }
     
-    // Validate user exists and is not spam/deleted
-    if ($user && !is_user_spam($user->ID) && user_can($user->ID, 'read')) {
+    // Validate user exists and has basic read capability
+    if ($user && user_can($user->ID, 'read')) {
         return $user;
     }
     
