@@ -1,6 +1,6 @@
 <?php
 // File: includes/core/webhook-router.php
-// @version 1.6.0
+// @version 1.7.0
 // Author: greghacke
 // Required for REST API routes to handle access schema operations
 /**
@@ -67,9 +67,16 @@ function accessSchema_api_permission_check($request) {
     $api_key = $request->get_header('x-api-key');
     $route   = $request->get_route();
 
-    // Use options instead of constants for better security
-    $read_key  = get_option('accessschema_api_key_readonly', '');
-    $write_key = get_option('accessschema_api_key_readwrite', '');
+    // Check options first, then fall back to constants
+    $read_key  = get_option('accessschema_api_key_readonly');
+    if (!$read_key && defined('ACCESSSCHEMA_API_KEY_READONLY')) {
+        $read_key = ACCESSSCHEMA_API_KEY_READONLY;
+    }
+    
+    $write_key = get_option('accessschema_api_key_readwrite');
+    if (!$write_key && defined('ACCESSSCHEMA_API_KEY_READWRITE')) {
+        $write_key = ACCESSSCHEMA_API_KEY_READWRITE;
+    }
     
     // Add rate limiting check
     if (!accessSchema_check_rate_limit($request->get_header('x-forwarded-for') ?: $_SERVER['REMOTE_ADDR'])) {
@@ -166,7 +173,7 @@ function accessSchema_api_get_roles($request) {
         return new WP_Error('user_not_found', 'User not found by id or email.', ['status' => 404]);
     }
 
-    $roles = get_user_meta($user->ID, 'accessSchema', true);
+    $roles = accessSchema_get_user_roles($user->ID);
     return rest_ensure_response([
         'email' => $user->user_email,
         'roles' => is_array($roles) ? $roles : [],

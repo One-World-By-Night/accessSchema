@@ -1,6 +1,6 @@
 <?php
 // File: includes/admin/settings.php
-// @version 1.6.0
+// @version 1.7.0
 // @author greghacke
 
 defined( 'ABSPATH' ) || exit;

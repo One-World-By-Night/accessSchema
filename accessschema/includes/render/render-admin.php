@@ -1,6 +1,6 @@
 <?php
 // File: includes/render/render-admin.php
-// @version 1.6.0
+// @version 1.7.0
 // Author: greghacke
 
 defined( 'ABSPATH' ) || exit;
@@ -56,7 +56,7 @@ function accessSchema_render_user_role_ui( $user ) {
 
     $assigned   = get_user_meta( $user->ID, 'accessSchema', true );
     $all_roles  = accessSchema_get_available_roles();
-    $assigned   = is_array( $assigned ) ? $assigned : [];
+    $assigned = accessSchema_get_user_roles( $user->ID );
 
     // Enqueue styles and scripts
     $base = dirname( __DIR__, 2 ) . '/accessSchema.php';
