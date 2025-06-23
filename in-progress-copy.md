@@ -15,7 +15,7 @@
 /**
  * Plugin Name: accessSchema
  * Description: Manage role-based access schema plugin with audit logging and REST API support.
- * Version: 1.7.0
+ * Version: 2.0.0
  * Author: greghacke
  * Author URI: https://www.owbn.net
  * Text Domain: accessschema
@@ -30,7 +30,7 @@
 defined('ABSPATH') || exit;
 
 // Define constants
-define('ACCESSSCHEMA_VERSION', '1.7.0');
+define('ACCESSSCHEMA_VERSION', '2.0.0');
 define('ACCESSSCHEMA_PLUGIN_FILE', __FILE__);
 define('ACCESSSCHEMA_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('ACCESSSCHEMA_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -442,7 +442,7 @@ defined('ABSPATH') || exit;
 
 // Cache groups
 const ACCESSSCHEMA_CACHE_GROUP = 'accessschema';
-const ACCESSSCHEMA_CACHE_VERSION = '1.7.0';
+const ACCESSSCHEMA_CACHE_VERSION = '2.0.0';
 
 /**
  * Enhanced cache wrapper with persistent cache support
@@ -1009,7 +1009,7 @@ function accessSchema_api_error($message, $code = 'error', $status = 400, $data 
 ```javascript
 /**
  * AccessSchema Admin JavaScript
- * @version 1.7.0
+ * @version 2.0.0
  */
 (function(window, document, $) {
     'use strict';
