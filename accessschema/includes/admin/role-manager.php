@@ -1,414 +1,386 @@
 <?php
+/**
+ * File: includes/admin/role-manager.php
+ * @version 1.7.0
+ * Author: greghacke
+ */
 
-// File: includes/admin/role-manager.php
-// @version 1.7.0
-// Author: greghacke
-
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
 function accessSchema_register_admin_menu() {
     add_users_page(
-        'Access Schema Roles',
-        'accessSchema',
-        'manage_options',
+        __('Access Schema Roles', 'accessschema'),
+        __('accessSchema', 'accessschema'),
+        'manage_access_schema',
         'accessSchema-roles',
         'accessSchema_render_role_manager_page'
     );
 }
-add_action( 'admin_menu', 'accessSchema_register_admin_menu' );
+add_action('admin_menu', 'accessSchema_register_admin_menu');
 
 function accessSchema_render_role_manager_page() {
+    if (!current_user_can('manage_access_schema')) {
+        wp_die(__('Insufficient permissions', 'accessschema'));
+    }
     ?>
     <div class="wrap">
-        <h1>Access Schema Role Registry</h1>
-
-        <?php
-        // Show confirmation warning if needed
-        if (
-            isset($_GET['confirm_delete'], $_GET['has_children'], $_GET['accessSchema_confirm_delete_nonce']) &&
-            wp_verify_nonce(sanitize_text_field(wp_unslash($_GET['accessSchema_confirm_delete_nonce'])), 'accessSchema_confirm_delete_action') &&
-            intval($_GET['has_children']) === 1
-        ) {
-            $confirm_id = (int) $_GET['confirm_delete'];
-            ?>
-            <div class="notice notice-warning">
-                <p>
-                    This role has child roles. Are you sure you want to delete it?<br><br>
-                    <form method="post" style="display:inline;">
-                        <input type="hidden" name="accessSchema_delete_role_id" value="<?php echo esc_attr( $confirm_id ); ?>">
-                        <input type="hidden" name="accessSchema_force_delete" value="1">
-                        <?php wp_nonce_field( 'accessSchema_delete_role_action', 'accessSchema_delete_role_nonce' ); ?>
-                        <button type="submit" class="button button-danger">Yes, Delete Anyway</button>
-                        <a href="<?php echo esc_url( admin_url( 'users.php?page=accessSchema-roles' ) ); ?>" class="button">Cancel</a>
-                    </form>
-                </p>
-            </div>
-            <?php
-        }
-        ?>
-
-        <form method="post">
-            <?php wp_nonce_field( 'accessSchema_add_role_action', 'accessSchema_add_role_nonce' ); ?>
-            <h2>Add Role(s)</h2>
+        <h1><?php esc_html_e('Access Schema Role Registry', 'accessschema'); ?></h1>
+        
+        <?php accessSchema_show_admin_notices(); ?>
+        
+        <form method="post" id="accessSchema-add-role-form">
+            <?php wp_nonce_field('accessSchema_add_role_action', 'accessSchema_add_role_nonce'); ?>
+            <h2><?php esc_html_e('Add Role(s)', 'accessschema'); ?></h2>
             <table class="form-table">
                 <tr>
-                    <th><label for="full_paths">Full Role Path(s)</label></th>
+                    <th><label for="full_paths"><?php esc_html_e('Full Role Path(s)', 'accessschema'); ?></label></th>
                     <td>
-                        <textarea name="full_paths" id="full_paths" rows="6" style="width: 100%;" placeholder="Example: Coordinators/Brujah/Subcoordinator"><?php echo isset( $_POST['full_paths'] ) ? esc_textarea( sanitize_textarea_field( wp_unslash( $_POST['full_paths'] ) ) ) : ''; ?></textarea>
-                        <p class="description">Enter one full role path per line using <code>/</code> between each level.<br>
-                        Example: <code>Chronicles/KONY/HST</code></p>
+                        <textarea name="full_paths" id="full_paths" rows="6" style="width: 100%;" placeholder="Example: Coordinators/Brujah/Subcoordinator"></textarea>
+                        <p class="description">
+                            <?php esc_html_e('Enter one full role path per line using / between each level.', 'accessschema'); ?><br>
+                            <?php esc_html_e('Example:', 'accessschema'); ?> <code>Chronicles/KONY/HST</code>
+                        </p>
                     </td>
                 </tr>
             </table>
-
-            <?php submit_button( 'Add Role(s)', 'primary', 'full_path_add_submit' ); ?>
+            <?php submit_button(__('Add Role(s)', 'accessschema'), 'primary', 'submit'); ?>
         </form>
-
+        
         <hr />
-
+        
         <?php accessSchema_render_registered_roles_table(); ?>
     </div>
-    <?php
-}
-
-function accessSchema_render_registered_roles_table() {
-    global $wpdb;
-
-    $table      = $wpdb->prefix . 'access_roles';
-    $per_page   = 25;
-    $page       = isset($_GET['paged']) ? max(1, intval(sanitize_text_field(wp_unslash($_GET['paged'])))) : 1;
-    $offset     = ($page - 1) * $per_page;
-    $filter     = isset($_GET['filter']) ? sanitize_text_field(wp_unslash($_GET['filter'])) : '';
-    $like       = '%' . $wpdb->esc_like($filter) . '%';
-
-    // Count total rows
-    if ($filter) {
-        $total = (int) $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT COUNT(*) FROM `" . esc_sql($table) . "` WHERE full_path LIKE %s",
-                $like
-            )
-        );
-    } else {
-        $total = (int) $wpdb->get_var("SELECT COUNT(*) FROM `" . esc_sql($table) . "`");
-    }
-
-    $total_pages = ceil($total / $per_page);
-
-    // Fetch rows with optional filter
-    if ($filter) {
-        $roles = $wpdb->get_results(
-            $wpdb->prepare(
-                "SELECT id, name, full_path FROM `" . esc_sql($table) . "` WHERE full_path LIKE %s ORDER BY full_path LIMIT %d OFFSET %d",
-                $like,
-                $per_page,
-                $offset
-            ),
-            ARRAY_A
-        );
-    } else {
-        $roles = $wpdb->get_results(
-            $wpdb->prepare(
-                "SELECT id, name, full_path FROM `" . esc_sql($table) . "` ORDER BY full_path LIMIT %d OFFSET %d",
-                $per_page,
-                $offset
-            ),
-            ARRAY_A
-        );
-    }
-
-    echo '<h2>Registered Roles</h2>';
-    echo '<form method="get" style="margin-bottom:10px;">';
-    echo '<input type="hidden" name="page" value="accessSchema-roles">';
-    echo '<input type="text" name="filter" placeholder="Filter by Full Path..." value="' . esc_attr($filter) . '" style="width:100%;padding:6px;">';
-    echo '</form>';
-
-    if (empty($roles)) {
-        echo '<p>No roles registered.</p>';
-        return;
-    }
-
-    echo '<table class="widefat striped" id="accessSchema-roles-table">';
-    echo '<thead><tr><th>Name</th><th>Full Path</th><th>Actions</th></tr></thead>';
-    echo '<tbody>';
-
-    foreach ($roles as $role) {
-        echo '<tr>';
-        echo '<td>' . esc_html($role['name']) . '</td>';
-        echo '<td class="role-path">' . esc_html($role['full_path']) . '</td>';
-        echo '<td>';
-        $child_count = (int) $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT COUNT(*) FROM `" . esc_sql($table) . "` WHERE parent_id = %d",
-                $role['id']
-            )
-        );
-
-        if ($child_count > 0) {
-            $confirm_url = add_query_arg([
-                'page' => 'accessSchema-roles',
-                'confirm_delete' => $role['id'],
-                'has_children' => 1,
-                'accessSchema_confirm_delete_nonce' => wp_create_nonce('accessSchema_confirm_delete_action'),
-                'filter' => $filter,
-                'paged' => $page,
-            ], admin_url('users.php'));
-
-            echo '<a href="' . esc_url($confirm_url) . '" class="button button-small button-warning">Delete (Has Children)</a>';
-        } else {
-            echo '<form method="POST" style="display:inline;">';
-            echo '<input type="hidden" name="accessSchema_delete_role_id" value="' . esc_attr($role['id']) . '">';
-            wp_nonce_field('accessSchema_delete_role_action', 'accessSchema_delete_role_nonce');
-            echo '<button type="submit" class="button button-small button-danger">Delete</button>';
-            echo '</form>';
-        }
-
-        echo ' <button class="button button-small accessSchema-edit-role" data-id="' . esc_attr($role['id']) . '" data-name="' . esc_attr($role['name']) . '" data-path="' . esc_attr($role['full_path']) . '">Edit</button>';
-        echo '</td>';
-        echo '</tr>';
-    }
-
-    echo '</tbody></table>';
-
-    // Pagination links
-    echo '<div style="margin-top: 1em;">';
-    echo '<div class="tablenav-pages">';
-    if ($total_pages > 1) {
-        for ($i = 1; $i <= $total_pages; $i++) {
-            $current = $i === $page ? ' style="font-weight:bold;"' : '';
-            printf(
-                '<a href="%s"%s class="page-numbers">%s</a> ',
-                esc_url(add_query_arg([
-                    'paged' => $i,
-                    'filter' => $filter,
-                ])),
-                esc_attr($current),
-                esc_html($i)
-            );
-        }
-    }
-    echo '</div>';
-    echo '</div>';
-}
-
-add_action( 'admin_init', 'accessSchema_handle_add_role_form' );
-function accessSchema_handle_add_role_form() {
-    global $wpdb;
-    $table = $wpdb->prefix . 'access_roles';
-
-    if (
-        isset( $_POST['full_path_add_submit'], $_POST['full_paths'], $_POST['accessSchema_add_role_nonce'] ) &&
-        wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['accessSchema_add_role_nonce'] ) ), 'accessSchema_add_role_action' )
-    ) {
-        $raw_input = isset($_POST['full_paths']) ? sanitize_textarea_field(wp_unslash($_POST['full_paths'])) : '';
-        $lines = explode("\n", $raw_input);
-        $added = 0;
-        $skipped = 0;
-
-        foreach ( $lines as $line ) {
-            $path = trim( preg_replace( '#[^A-Za-z0-9 _/\-]#', '', $line ) );
-            if ( $path === '' ) {
-                continue;
-            }
-
-            $segments = explode( '/', $path );
-            if ( count( $segments ) < 1 ) {
-                $skipped++;
-                continue;
-            }
-
-            $parent_id = null;
-            $accumulated_path = '';
-
-            foreach ( $segments as $index => $name ) {
-                $name = trim( $name );
-                $accumulated_path = $accumulated_path === '' ? $name : $accumulated_path . '/' . $name;
-
-                $existing = is_null( $parent_id )
-                    ? $wpdb->get_var( $wpdb->prepare( "SELECT id FROM `" . esc_sql( $table ) . "` WHERE name = %s AND parent_id IS NULL", $name ) )
-                    : $wpdb->get_var( $wpdb->prepare( "SELECT id FROM `" . esc_sql( $table ) . "` WHERE name = %s AND parent_id = %d", $name, $parent_id ) );
-
-                if ( $existing ) {
-                    $parent_id = (int) $existing;
-                    continue;
-                }
-
-                $result = $wpdb->insert( $table, [
-                    'parent_id' => $parent_id,
-                    'name'      => $name,
-                    'full_path' => $accumulated_path,
-                ], [ '%d', '%s', '%s' ] );
-
-                if ( $result ) {
-                    $parent_id = $wpdb->insert_id;
-                    if ( $index === count( $segments ) - 1 ) {
-                        $added++;
-                    }
-                } else {
-                    $skipped++;
-                    break;
-                }
-            }
-        }
-
-        if ( $added ) {
-            add_action( 'admin_notices', fn() =>
-                print '<div class="notice notice-success is-dismissible"><p>' . esc_html( $added ) . ' role(s) added successfully.</p></div>'
-            );
-        }
-
-        if ( $skipped ) {
-            add_action( 'admin_notices', fn() =>
-                print '<div class="notice notice-warning is-dismissible"><p>' . esc_html( $skipped ) . ' path(s) skipped (may already exist or invalid).</p></div>'
-            );
-        }
-
-        wp_redirect( admin_url( 'users.php?page=accessSchema-roles' ) );
-        exit;
-    }
-}
-
-add_action( 'admin_init', 'accessSchema_handle_delete_role_form' );
-function accessSchema_handle_delete_role_form() {
-    global $wpdb;
-    $table = $wpdb->prefix . 'access_roles';
-
-    if (
-        isset( $_POST['accessSchema_delete_role_id'], $_POST['accessSchema_delete_role_nonce'] ) &&
-        wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['accessSchema_delete_role_nonce'] ) ), 'accessSchema_delete_role_action' )
-    ) {
-        $role_id = (int) $_POST['accessSchema_delete_role_id'];
-        $force   = isset($_POST['accessSchema_force_delete']) && $_POST['accessSchema_force_delete'] === '1';
-
-        $child_count = (int) $wpdb->get_var( $wpdb->prepare(
-            "SELECT COUNT(*) FROM `" . esc_sql( $table ) . "` WHERE parent_id = %d",
-            $role_id
-        ) );
-
-        if ( $child_count > 0 && ! $force ) {
-            $redirect_url = add_query_arg([
-                'page' => 'accessSchema-roles',
-                'confirm_delete' => $role_id,
-                'has_children' => 1
-            ], admin_url( 'users.php' ));
-
-            wp_redirect( $redirect_url );
-            exit;
-        }
-
-        $deleted = $wpdb->delete( $table, [ 'id' => $role_id ], [ '%d' ] );
-
-        if ( $deleted ) {
-            add_action( 'admin_notices', fn() =>
-                print '<div class="notice notice-success is-dismissible"><p>Role deleted successfully.</p></div>'
-            );
-        } else {
-            add_action( 'admin_notices', fn() =>
-                print '<div class="notice notice-error is-dismissible"><p>Failed to delete role.</p></div>'
-            );
-        }
-
-        wp_redirect( admin_url( 'users.php?page=accessSchema-roles' ) );
-        exit;
-    }
-}
-
-/** accessSchema_render_bulk_operations
- * Render bulk operations dropdown above the roles table.
- */
-function accessSchema_render_bulk_operations() {
-    ?>
-    <div class="tablenav top">
-        <div class="alignleft actions bulkactions">
-            <label for="bulk-action-selector-top" class="screen-reader-text">Select bulk action</label>
-            <select name="action" id="bulk-action-selector-top">
-                <option value="-1">Bulk Actions</option>
-                <option value="delete">Delete</option>
-                <option value="export">Export</option>
-            </select>
-            <input type="submit" id="doaction" class="button action" value="Apply">
+    
+    <div id="accessSchema-edit-modal" style="display:none;">
+        <div class="accessSchema-modal-content">
+            <h3><?php esc_html_e('Edit Role', 'accessschema'); ?></h3>
+            <form id="accessSchema-edit-form">
+                <?php wp_nonce_field('accessSchema_edit_role', 'edit_nonce'); ?>
+                <input type="hidden" id="edit_role_id" name="role_id">
+                <label><?php esc_html_e('Role Name:', 'accessschema'); ?></label>
+                <input type="text" id="edit_role_name" name="role_name" class="regular-text">
+                <div class="modal-actions">
+                    <button type="submit" class="button button-primary"><?php esc_html_e('Save', 'accessschema'); ?></button>
+                    <button type="button" class="button" onclick="closeEditModal()"><?php esc_html_e('Cancel', 'accessschema'); ?></button>
+                </div>
+            </form>
         </div>
     </div>
     <?php
 }
 
-/** accessSchema_handle_bulk_actions
- * Handle bulk actions submitted from the roles table.
- */
-add_action('admin_init', 'accessSchema_handle_bulk_actions');
-function accessSchema_handle_bulk_actions() {
-    if (!isset($_POST['action']) || $_POST['action'] === '-1') {
-        return;
+function accessSchema_show_admin_notices() {
+    if (isset($_GET['confirm_delete']) && isset($_GET['nonce']) && 
+        wp_verify_nonce($_GET['nonce'], 'confirm_delete_' . $_GET['confirm_delete'])) {
+        
+        $role_id = absint($_GET['confirm_delete']);
+        ?>
+        <div class="notice notice-warning">
+            <p>
+                <?php esc_html_e('This role has child roles. Deleting it will also delete all child roles.', 'accessschema'); ?>
+                <br><br>
+                <a href="<?php echo esc_url(wp_nonce_url(
+                    add_query_arg(array(
+                        'page' => 'accessSchema-roles',
+                        'action' => 'delete',
+                        'role_id' => $role_id,
+                        'cascade' => 1
+                    ), admin_url('users.php')),
+                    'delete_role_' . $role_id
+                )); ?>" class="button button-primary"><?php esc_html_e('Yes, Delete All', 'accessschema'); ?></a>
+                <a href="<?php echo esc_url(admin_url('users.php?page=accessSchema-roles')); ?>" class="button"><?php esc_html_e('Cancel', 'accessschema'); ?></a>
+            </p>
+        </div>
+        <?php
     }
-    
-    if (!isset($_POST['role_ids']) || !is_array($_POST['role_ids'])) {
-        return;
-    }
-    
-    if (!wp_verify_nonce($_POST['_wpnonce'], 'bulk-roles')) {
-        return;
-    }
-    
-    $action = sanitize_text_field($_POST['action']);
-    $role_ids = array_map('intval', $_POST['role_ids']);
-    
-    switch ($action) {
-        case 'delete':
-            foreach ($role_ids as $role_id) {
-                accessSchema_delete_role_cascade($role_id);
-            }
-            break;
-        case 'export':
-            accessSchema_export_roles($role_ids);
-            break;
-    }
-    
-    wp_redirect(add_query_arg('bulk_action', $action, wp_get_referer()));
-    exit;
 }
 
-// Add export function
+function accessSchema_render_registered_roles_table() {
+    global $wpdb;
+    $table = $wpdb->prefix . 'accessSchema_roles';
+    
+    $per_page = 25;
+    $current_page = isset($_GET['paged']) ? max(1, absint($_GET['paged'])) : 1;
+    $offset = ($current_page - 1) * $per_page;
+    $search = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
+    
+    // Build query
+    $where = "WHERE is_active = 1";
+    $params = array();
+    
+    if ($search) {
+        $where .= " AND (name LIKE %s OR full_path LIKE %s)";
+        $like = '%' . $wpdb->esc_like($search) . '%';
+        $params[] = $like;
+        $params[] = $like;
+    }
+    
+    // Get total count
+    $count_query = "SELECT COUNT(*) FROM {$table} {$where}";
+    $total_items = $params ? $wpdb->get_var($wpdb->prepare($count_query, ...$params)) : $wpdb->get_var($count_query);
+    
+    // Get roles
+    $query = "SELECT * FROM {$table} {$where} ORDER BY full_path LIMIT %d OFFSET %d";
+    $query_params = array_merge($params, array($per_page, $offset));
+    $roles = $wpdb->get_results($wpdb->prepare($query, ...$query_params), ARRAY_A);
+    
+    ?>
+    <h2><?php esc_html_e('Registered Roles', 'accessschema'); ?></h2>
+    
+    <form method="get" class="search-form">
+        <input type="hidden" name="page" value="accessSchema-roles">
+        <input type="search" name="s" value="<?php echo esc_attr($search); ?>" placeholder="<?php esc_attr_e('Search roles...', 'accessschema'); ?>">
+        <input type="submit" class="button" value="<?php esc_attr_e('Search', 'accessschema'); ?>">
+    </form>
+    
+    <?php if (empty($roles)) : ?>
+        <p><?php esc_html_e('No roles found.', 'accessschema'); ?></p>
+    <?php else : ?>
+        <form method="post" id="roles-form">
+            <?php wp_nonce_field('bulk-roles'); ?>
+            
+            <div class="tablenav top">
+                <div class="alignleft actions bulkactions">
+                    <select name="action">
+                        <option value="-1"><?php esc_html_e('Bulk Actions', 'accessschema'); ?></option>
+                        <option value="delete"><?php esc_html_e('Delete', 'accessschema'); ?></option>
+                        <option value="export"><?php esc_html_e('Export', 'accessschema'); ?></option>
+                    </select>
+                    <input type="submit" class="button action" value="<?php esc_attr_e('Apply', 'accessschema'); ?>">
+                </div>
+                
+                <?php 
+                $pagination_args = array(
+                    'base' => add_query_arg('paged', '%#%'),
+                    'format' => '',
+                    'prev_text' => '&laquo;',
+                    'next_text' => '&raquo;',
+                    'total' => ceil($total_items / $per_page),
+                    'current' => $current_page
+                );
+                
+                echo '<div class="tablenav-pages">';
+                echo paginate_links($pagination_args);
+                echo '</div>';
+                ?>
+            </div>
+            
+            <table class="wp-list-table widefat fixed striped">
+                <thead>
+                    <tr>
+                        <td class="manage-column column-cb check-column">
+                            <input type="checkbox" id="cb-select-all-1">
+                        </td>
+                        <th><?php esc_html_e('Name', 'accessschema'); ?></th>
+                        <th><?php esc_html_e('Full Path', 'accessschema'); ?></th>
+                        <th><?php esc_html_e('Depth', 'accessschema'); ?></th>
+                        <th><?php esc_html_e('Actions', 'accessschema'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($roles as $role) : ?>
+                        <tr>
+                            <th scope="row" class="check-column">
+                                <input type="checkbox" name="role_ids[]" value="<?php echo esc_attr($role['id']); ?>">
+                            </th>
+                            <td><?php echo esc_html($role['name']); ?></td>
+                            <td><?php echo esc_html($role['full_path']); ?></td>
+                            <td><?php echo esc_html($role['depth']); ?></td>
+                            <td>
+                                <?php
+                                $has_children = $wpdb->get_var($wpdb->prepare(
+                                    "SELECT 1 FROM {$table} WHERE parent_id = %d LIMIT 1",
+                                    $role['id']
+                                ));
+                                
+                                if ($has_children) {
+                                    $confirm_url = add_query_arg(array(
+                                        'page' => 'accessSchema-roles',
+                                        'confirm_delete' => $role['id'],
+                                        'nonce' => wp_create_nonce('confirm_delete_' . $role['id'])
+                                    ), admin_url('users.php'));
+                                    ?>
+                                    <a href="<?php echo esc_url($confirm_url); ?>" class="button button-small">
+                                        <?php esc_html_e('Delete', 'accessschema'); ?>
+                                    </a>
+                                <?php } else { ?>
+                                    <a href="<?php echo esc_url(wp_nonce_url(
+                                        add_query_arg(array(
+                                            'page' => 'accessSchema-roles',
+                                            'action' => 'delete',
+                                            'role_id' => $role['id']
+                                        ), admin_url('users.php')),
+                                        'delete_role_' . $role['id']
+                                    )); ?>" class="button button-small" onclick="return confirm('<?php esc_attr_e('Delete this role?', 'accessschema'); ?>')">
+                                        <?php esc_html_e('Delete', 'accessschema'); ?>
+                                    </a>
+                                <?php } ?>
+                                
+                                <button type="button" class="button button-small accessSchema-edit-role" 
+                                    data-id="<?php echo esc_attr($role['id']); ?>" 
+                                    data-name="<?php echo esc_attr($role['name']); ?>">
+                                    <?php esc_html_e('Edit', 'accessschema'); ?>
+                                </button>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </form>
+    <?php endif; ?>
+    
+    <script>
+    jQuery(document).ready(function($) {
+        $('.accessSchema-edit-role').on('click', function() {
+            var id = $(this).data('id');
+            var name = $(this).data('name');
+            $('#edit_role_id').val(id);
+            $('#edit_role_name').val(name);
+            $('#accessSchema-edit-modal').show();
+        });
+        
+        $('#accessSchema-edit-form').on('submit', function(e) {
+            e.preventDefault();
+            // AJAX save implementation
+            closeEditModal();
+        });
+    });
+    
+    function closeEditModal() {
+        document.getElementById('accessSchema-edit-modal').style.display = 'none';
+    }
+    </script>
+    <?php
+}
+
+// Handle form submissions
+add_action('admin_init', 'accessSchema_handle_role_actions');
+
+function accessSchema_handle_role_actions() {
+    // Add roles
+    if (isset($_POST['submit']) && isset($_POST['accessSchema_add_role_nonce']) &&
+        wp_verify_nonce($_POST['accessSchema_add_role_nonce'], 'accessSchema_add_role_action')) {
+        
+        if (!current_user_can('manage_access_schema')) {
+            return;
+        }
+        
+        $paths = sanitize_textarea_field($_POST['full_paths'] ?? '');
+        $lines = array_filter(array_map('trim', explode("\n", $paths)));
+        
+        $added = 0;
+        $failed = 0;
+        
+        foreach ($lines as $path) {
+            $segments = array_map('trim', explode('/', $path));
+            if (accessSchema_register_path($segments)) {
+                $added++;
+            } else {
+                $failed++;
+            }
+        }
+        
+        $redirect = add_query_arg(array(
+            'page' => 'accessSchema-roles',
+            'added' => $added,
+            'failed' => $failed
+        ), admin_url('users.php'));
+        
+        wp_safe_redirect($redirect);
+        exit;
+    }
+    
+    // Delete single role
+    if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['role_id'])) {
+        $role_id = absint($_GET['role_id']);
+        
+        if (!wp_verify_nonce($_GET['_wpnonce'] ?? '', 'delete_role_' . $role_id)) {
+            return;
+        }
+        
+        if (!current_user_can('manage_access_schema')) {
+            return;
+        }
+        
+        $cascade = !empty($_GET['cascade']);
+        $result = accessSchema_delete_role($role_id, $cascade);
+        
+        $redirect = add_query_arg(array(
+            'page' => 'accessSchema-roles',
+            'deleted' => $result ? 1 : 0
+        ), admin_url('users.php'));
+        
+        wp_safe_redirect($redirect);
+        exit;
+    }
+    
+    // Bulk actions
+    if (isset($_POST['action']) && $_POST['action'] !== '-1' && isset($_POST['role_ids'])) {
+        if (!wp_verify_nonce($_POST['_wpnonce'] ?? '', 'bulk-roles')) {
+            return;
+        }
+        
+        if (!current_user_can('manage_access_schema')) {
+            return;
+        }
+        
+        $action = sanitize_text_field($_POST['action']);
+        $role_ids = array_map('absint', $_POST['role_ids']);
+        
+        switch ($action) {
+            case 'delete':
+                $deleted = 0;
+                foreach ($role_ids as $id) {
+                    if (accessSchema_delete_role($id, true)) {
+                        $deleted++;
+                    }
+                }
+                $redirect_args = array('deleted_bulk' => $deleted);
+                break;
+                
+            case 'export':
+                accessSchema_export_roles($role_ids);
+                exit;
+        }
+        
+        $redirect = add_query_arg(array_merge(
+            array('page' => 'accessSchema-roles'),
+            $redirect_args ?? array()
+        ), admin_url('users.php'));
+        
+        wp_safe_redirect($redirect);
+        exit;
+    }
+}
+
 function accessSchema_export_roles($role_ids) {
     global $wpdb;
-    $table = $wpdb->prefix . 'access_roles';
+    $table = $wpdb->prefix . 'accessSchema_roles';
     
+    $placeholders = implode(',', array_fill(0, count($role_ids), '%d'));
     $roles = $wpdb->get_results($wpdb->prepare(
-        "SELECT * FROM {$table} WHERE id IN (" . implode(',', array_fill(0, count($role_ids), '%d')) . ")",
+        "SELECT * FROM {$table} WHERE id IN ({$placeholders})",
         ...$role_ids
     ), ARRAY_A);
     
-    header('Content-Type: text/csv');
-    header('Content-Disposition: attachment; filename="access_roles_export.csv"');
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="accessSchema_roles_' . date('Y-m-d') . '.csv"');
     
     $output = fopen('php://output', 'w');
-    fputcsv($output, array_keys($roles[0]));
+    fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
+    
+    fputcsv($output, array('ID', 'Parent ID', 'Name', 'Slug', 'Full Path', 'Depth'));
     
     foreach ($roles as $role) {
-        fputcsv($output, $role);
+        fputcsv($output, array(
+            $role['id'],
+            $role['parent_id'],
+            $role['name'],
+            $role['slug'],
+            $role['full_path'],
+            $role['depth']
+        ));
     }
     
     fclose($output);
-    exit;
-}
-
-// Add cascade delete function
-function accessSchema_delete_role_cascade($role_id) {
-    global $wpdb;
-    
-    // Delete from user_roles junction table first
-    $wpdb->delete(
-        $wpdb->prefix . 'access_user_roles',
-        ['role_id' => $role_id],
-        ['%d']
-    );
-    
-    // Delete the role
-    $wpdb->delete(
-        $wpdb->prefix . 'access_roles',
-        ['id' => $role_id],
-        ['%d']
-    );
-    
-    // Clear caches
-    wp_cache_flush();
 }
