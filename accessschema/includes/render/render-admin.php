@@ -1,182 +1,283 @@
 <?php
-// File: includes/render/render-admin.php
-// @version 1.7.0
-// Author: greghacke
+/**
+ * File: includes/render/render-admin.php
+ * @version 1.7.0
+ * Author: greghacke
+ */
 
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
-/* Retrieves all available roles from the database, specifically those that are leaf nodes
- * (i.e., roles that do not have any child roles).
- *
- * @return array An array of role full paths.
+/**
+ * Get all available roles with hierarchy
  */
 function accessSchema_get_available_roles() {
-    global $wpdb;
-    $table = $wpdb->prefix . 'access_roles';
-
-    // Cache key for persistent storage
-    $cache_key = 'accessSchema_leaf_roles';
-    $cached = wp_cache_get( $cache_key, 'accessSchema' );
-    if ( $cached !== false ) {
+    $cache_key = 'accessSchema_all_roles_hierarchy';
+    $cached = wp_cache_get($cache_key, 'accessSchema');
+    
+    if ($cached !== false) {
         return $cached;
     }
-
-    // Safely build the SQL using wpdb->prepare() and table name escaping
-    $table_escaped = esc_sql( $table );
-
-    $query = "
-        SELECT r1.full_path 
-        FROM {$table_escaped} r1
-        LEFT JOIN {$table_escaped} r2 ON r2.parent_id = r1.id
-        WHERE r2.id IS NULL
-        ORDER BY r1.full_path
-    ";
-
-    // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- query has no user input or dynamic values beyond escaped table name
-    $results = $wpdb->get_results( $query, ARRAY_A );
-
-    $roles = array_map(
-        fn( $row ) => $row['full_path'],
-        $results
+    
+    global $wpdb;
+    $table = $wpdb->prefix . 'accessSchema_roles';
+    
+    $results = $wpdb->get_results(
+        "SELECT id, parent_id, name, full_path, depth 
+         FROM {$table} 
+         WHERE is_active = 1 
+         ORDER BY full_path",
+        ARRAY_A
     );
-
-    wp_cache_set( $cache_key, $roles, 'accessSchema' );
-
-    return $roles;
+    
+    if (empty($results)) {
+        return array();
+    }
+    
+    // Build hierarchy for display
+    $hierarchy = array();
+    $flat_list = array();
+    
+    foreach ($results as $role) {
+        $flat_list[] = $role['full_path'];
+        
+        // Add indentation for hierarchy display
+        $role['display_name'] = str_repeat('— ', $role['depth']) . $role['name'];
+        $hierarchy[$role['full_path']] = $role;
+    }
+    
+    $result = array(
+        'flat' => $flat_list,
+        'hierarchy' => $hierarchy
+    );
+    
+    wp_cache_set($cache_key, $result, 'accessSchema', 3600);
+    
+    return $result;
 }
 
-/* Renders the user role management UI on the user profile page.
- *
- * @param WP_User $user The user object for whom roles are being managed.
+/**
+ * Render user role management UI
  */
-function accessSchema_render_user_role_ui( $user ) {
-    if ( ! current_user_can( 'edit_user', $user->ID ) ) {
+function accessSchema_render_user_role_ui($user) {
+    if (!current_user_can('edit_user', $user->ID) || !current_user_can('assign_access_roles')) {
         return;
     }
-
-    $assigned   = get_user_meta( $user->ID, 'accessSchema', true );
-    $all_roles  = accessSchema_get_available_roles();
-    $assigned = accessSchema_get_user_roles( $user->ID );
-
-    // Enqueue styles and scripts
-    $base = dirname( __DIR__, 2 ) . '/accessSchema.php';
-    wp_enqueue_style( 'accessSchema-select2', plugins_url( '/assets/css/select2.min.css', $base ), [], '4.1.0' );
-    wp_enqueue_style( 'accessSchema-style', plugins_url( '/assets/css/accessSchema.css', $base ), [], '1.0.1' );
-
-    wp_enqueue_script( 'accessSchema-select2', plugins_url( '/assets/js/select2.min.js', $base ), [ 'jquery' ], '4.1.0', true );
-    wp_enqueue_script( 'accessSchema-init', plugins_url( '/assets/js/accessSchema.js', $base ), [ 'jquery', 'accessSchema-select2' ], '1.0.1', true );
-
-    accessSchema_render_user_role_select( $all_roles, $assigned );
+    
+    $all_roles = accessSchema_get_available_roles();
+    $assigned = accessSchema_get_user_roles($user->ID);
+    
+    // Enqueue assets
+    $base_url = ACCESSSCHEMA_PLUGIN_URL . 'assets/';
+    
+    wp_enqueue_style('accessSchema-select2', $base_url . 'css/select2.min.css', array(), '4.1.0');
+    wp_enqueue_style('accessSchema-style', $base_url . 'css/accessSchema.css', array(), ACCESSSCHEMA_VERSION);
+    
+    wp_enqueue_script('accessSchema-select2', $base_url . 'js/select2.min.js', array('jquery'), '4.1.0', true);
+    wp_enqueue_script('accessSchema-admin', $base_url . 'js/accessSchema.js', array('jquery', 'accessSchema-select2'), ACCESSSCHEMA_VERSION, true);
+    
+    // Localize script
+    wp_localize_script('accessSchema-admin', 'accessSchema_admin', array(
+        'ajax_url' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('accessSchema_admin_nonce'),
+        'i18n' => array(
+            'confirm_remove' => __('Remove this role?', 'accessschema'),
+            'error' => __('An error occurred', 'accessschema'),
+            'no_roles' => __('No roles assigned', 'accessschema')
+        )
+    ));
+    
+    accessSchema_render_user_role_select($all_roles, $assigned, $user->ID);
 }
 
-/* Renders the user role selection UI, including assigned roles and a dropdown for adding new roles.
- *
- * @param array $all_roles An array of all available roles (full_path strings).
- * @param array $assigned An array of roles currently assigned to the user.
+/**
+ * Render role selection UI
  */
-function accessSchema_render_user_role_select( $all_roles, $assigned ) {
+function accessSchema_render_user_role_select($all_roles, $assigned, $user_id) {
     ?>
-    <h2>Access Schema Roles</h2>
-    <?php wp_nonce_field( 'accessSchema_user_roles_action', 'accessSchema_user_roles_nonce' ); ?>
-
+    <h2><?php esc_html_e('Access Schema Roles', 'accessschema'); ?></h2>
+    <?php wp_nonce_field('accessSchema_user_roles_action', 'accessSchema_user_roles_nonce'); ?>
+    
     <table class="form-table" role="presentation">
         <tr>
-            <th><label>Assigned Roles</label></th>
+            <th><label><?php esc_html_e('Assigned Roles', 'accessschema'); ?></label></th>
             <td>
-                <div id="accessSchema-assigned-roles">
-                    <?php if ( ! empty( $assigned ) ) : ?>
-                        <?php foreach ( $assigned as $role ) : ?>
-                            <span class="access-role-tag">
-                                <?php echo esc_html( $role ); ?>
-                                <button type="button" class="remove-role-button" data-role="<?php echo esc_attr( $role ); ?>">×</button>
+                <div id="accessSchema-assigned-roles" data-user-id="<?php echo esc_attr($user_id); ?>">
+                    <?php if (!empty($assigned)) : ?>
+                        <?php foreach ($assigned as $role) : ?>
+                            <?php
+                            $role_info = isset($all_roles['hierarchy'][$role]) ? $all_roles['hierarchy'][$role] : null;
+                            $display_name = $role_info ? $role_info['name'] : $role;
+                            ?>
+                            <span class="access-role-tag" data-role="<?php echo esc_attr($role); ?>">
+                                <span class="role-name" title="<?php echo esc_attr($role); ?>">
+                                    <?php echo esc_html($display_name); ?>
+                                </span>
+                                <button type="button" class="remove-role-button" aria-label="<?php esc_attr_e('Remove role', 'accessschema'); ?>">
+                                    <span aria-hidden="true">×</span>
+                                </button>
+                                <input type="hidden" name="accessSchema_current_roles[]" value="<?php echo esc_attr($role); ?>">
                             </span>
                         <?php endforeach; ?>
                     <?php else : ?>
-                        <p><em>No roles currently assigned.</em></p>
+                        <p class="no-roles-message"><em><?php esc_html_e('No roles currently assigned.', 'accessschema'); ?></em></p>
                     <?php endif; ?>
                 </div>
-                <!-- Hidden inputs added dynamically by JS -->
+                
+                <div id="accessSchema-role-errors" class="notice notice-error" style="display:none;"></div>
             </td>
         </tr>
-
+        
         <tr>
-            <th><label for="accessSchema_add_roles">Add Roles</label></th>
+            <th><label for="accessSchema_add_roles"><?php esc_html_e('Add Roles', 'accessschema'); ?></label></th>
             <td>
-                <select name="accessSchema_add_roles[]" id="accessSchema_add_roles" multiple="multiple" style="width: 400px;">
-                    <?php foreach ( $all_roles as $role_path ) :
-                        if ( ! in_array( $role_path, $assigned, true ) ) : ?>
-                            <option value="<?php echo esc_attr( $role_path ); ?>">
-                                <?php echo esc_html( $role_path ); ?>
-                            </option>
-                        <?php endif;
-                    endforeach; ?>
+                <select name="accessSchema_add_roles[]" id="accessSchema_add_roles" multiple="multiple" style="width: 100%; max-width: 600px;">
+                    <?php 
+                    foreach ($all_roles['hierarchy'] as $path => $role) :
+                        if (!in_array($path, $assigned, true)) : 
+                    ?>
+                        <option value="<?php echo esc_attr($path); ?>" data-depth="<?php echo esc_attr($role['depth']); ?>">
+                            <?php echo esc_html($role['display_name']); ?>
+                        </option>
+                    <?php 
+                        endif;
+                    endforeach; 
+                    ?>
                 </select>
-                <p class="description">Use the dropdown to add new roles. Assigned roles are managed above.</p>
+                <p class="description">
+                    <?php esc_html_e('Select roles to add. Roles are organized hierarchically.', 'accessschema'); ?>
+                </p>
             </td>
         </tr>
+        
+        <?php if (current_user_can('manage_options')) : ?>
+        <tr>
+            <th><?php esc_html_e('Role Information', 'accessschema'); ?></th>
+            <td>
+                <details>
+                    <summary><?php esc_html_e('View role hierarchy', 'accessschema'); ?></summary>
+                    <div class="accessSchema-role-tree">
+                        <?php accessSchema_render_role_tree(); ?>
+                    </div>
+                </details>
+            </td>
+        </tr>
+        <?php endif; ?>
     </table>
+    
+    <input type="hidden" id="accessSchema_removed_roles" name="accessSchema_removed_roles" value="">
     <?php
 }
 
-/* Handles saving accessSchema roles when a user profile is updated.
- *
- * @param int $user_id The ID of the user being updated.
+/**
+ * Render role tree for reference
  */
-function accessSchema_user_profile_update( $user_id ) {
-    if (
-        ! current_user_can( 'edit_user', $user_id )
-        || ! isset( $_POST['accessSchema_user_roles_nonce'] )
-        || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['accessSchema_user_roles_nonce'] ) ), 'accessSchema_user_roles_action' )
+function accessSchema_render_role_tree() {
+    $tree = accessSchema_get_role_tree();
+    
+    echo '<ul class="role-tree">';
+    foreach ($tree as $node) {
+        accessSchema_render_tree_node($node);
+    }
+    echo '</ul>';
+}
+
+/**
+ * Render individual tree node
+ */
+function accessSchema_render_tree_node($node) {
+    echo '<li>';
+    echo '<span class="role-node" data-path="' . esc_attr($node['full_path']) . '">';
+    echo esc_html($node['name']);
+    echo '</span>';
+    
+    if (!empty($node['children'])) {
+        echo '<ul>';
+        foreach ($node['children'] as $child) {
+            accessSchema_render_tree_node($child);
+        }
+        echo '</ul>';
+    }
+    
+    echo '</li>';
+}
+
+/**
+ * Handle user profile update
+ */
+function accessSchema_user_profile_update($user_id) {
+    if (!current_user_can('edit_user', $user_id) || 
+        !current_user_can('assign_access_roles') ||
+        !isset($_POST['accessSchema_user_roles_nonce']) ||
+        !wp_verify_nonce($_POST['accessSchema_user_roles_nonce'], 'accessSchema_user_roles_action')
     ) {
         return;
     }
-
-    global $wpdb;
-    $table = $wpdb->prefix . 'access_user_roles';
     
-    // Start transaction
-    $wpdb->query('START TRANSACTION');
+    // Get current roles
+    $current_roles = accessSchema_get_user_roles($user_id);
     
-    try {
-        // Get current roles from junction table
-        $current_roles = $wpdb->get_col($wpdb->prepare(
-            "SELECT r.full_path FROM {$table} ur 
-             JOIN {$wpdb->prefix}access_roles r ON ur.role_id = r.id 
-             WHERE ur.user_id = %d",
-            $user_id
-        ));
-
-        // Process additions and removals
-        $add_roles = isset( $_POST['accessSchema_add_roles'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['accessSchema_add_roles'] ) ) : [];
-        $remove_roles = isset( $_POST['accessSchema_remove_roles'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['accessSchema_remove_roles'] ) ) : [];
-
-        // Add new roles using junction table
-        foreach ( $add_roles as $role_path ) {
-            if ( ! in_array( $role_path, $current_roles, true ) ) {
-                accessSchema_add_role_optimized( $user_id, $role_path );
-            }
-        }
-
-        // Remove roles
-        foreach ( $remove_roles as $role_path ) {
-            if ( in_array( $role_path, $current_roles, true ) ) {
-                accessSchema_remove_role_optimized( $user_id, $role_path );
-            }
-        }
-        
-        $wpdb->query('COMMIT');
-        
-        // Clear caches
-        wp_cache_delete( 'user_roles_' . $user_id, 'accessSchema' );
-        
-    } catch (Exception $e) {
-        $wpdb->query('ROLLBACK');
-        error_log('AccessSchema role update failed: ' . $e->getMessage());
+    // Get submitted roles
+    $submitted_roles = isset($_POST['accessSchema_current_roles']) ? 
+        array_map('sanitize_text_field', wp_unslash($_POST['accessSchema_current_roles'])) : 
+        array();
+    
+    // Get added roles
+    $add_roles = isset($_POST['accessSchema_add_roles']) ? 
+        array_map('sanitize_text_field', wp_unslash($_POST['accessSchema_add_roles'])) : 
+        array();
+    
+    // Get removed roles from hidden field
+    $removed_roles = isset($_POST['accessSchema_removed_roles']) ? 
+        array_filter(explode(',', sanitize_text_field($_POST['accessSchema_removed_roles']))) : 
+        array();
+    
+    // Calculate final roles
+    $final_roles = array_unique(array_merge(
+        array_diff($submitted_roles, $removed_roles),
+        $add_roles
+    ));
+    
+    // Update roles
+    $result = accessSchema_save_user_roles($user_id, $final_roles, get_current_user_id());
+    
+    if (is_wp_error($result)) {
+        add_action('admin_notices', function() use ($result) {
+            echo '<div class="notice notice-error"><p>';
+            echo esc_html($result->get_error_message());
+            echo '</p></div>';
+        });
     }
 }
 
-// Register hooks for user profile display and update
-add_action( 'show_user_profile', 'accessSchema_render_user_role_ui' );
-add_action( 'edit_user_profile', 'accessSchema_render_user_role_ui' );
-add_action( 'personal_options_update', 'accessSchema_user_profile_update' );
-add_action( 'edit_user_profile_update', 'accessSchema_user_profile_update' );
+// Register hooks
+add_action('show_user_profile', 'accessSchema_render_user_role_ui');
+add_action('edit_user_profile', 'accessSchema_render_user_role_ui');
+add_action('personal_options_update', 'accessSchema_user_profile_update');
+add_action('edit_user_profile_update', 'accessSchema_user_profile_update');
+
+// AJAX handlers
+add_action('wp_ajax_accessSchema_validate_role', 'accessSchema_ajax_validate_role');
+
+function accessSchema_ajax_validate_role() {
+    check_ajax_referer('accessSchema_admin_nonce', 'nonce');
+    
+    if (!current_user_can('assign_access_roles')) {
+        wp_send_json_error('Insufficient permissions');
+    }
+    
+    $user_id = isset($_POST['user_id']) ? absint($_POST['user_id']) : 0;
+    $role_path = isset($_POST['role_path']) ? sanitize_text_field($_POST['role_path']) : '';
+    
+    if (!$user_id || !$role_path) {
+        wp_send_json_error('Invalid parameters');
+    }
+    
+    $current_roles = accessSchema_get_user_roles($user_id);
+    $is_valid = accessSchema_validate_role_assignment($user_id, $role_path, $current_roles);
+    
+    if ($is_valid) {
+        wp_send_json_success();
+    } else {
+        wp_send_json_error(__('This role cannot be assigned due to conflicts or restrictions.', 'accessschema'));
+    }
+}
