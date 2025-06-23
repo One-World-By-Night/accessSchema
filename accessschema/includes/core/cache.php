@@ -2,7 +2,7 @@
 
 /** 
  * File: includes/core/cache.php
- * @version 1.6.0
+ * @version 1.7.0
  * Author: greghacke
  */
 
