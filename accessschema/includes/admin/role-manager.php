@@ -312,3 +312,103 @@ function accessSchema_handle_delete_role_form() {
         exit;
     }
 }
+
+/** accessSchema_render_bulk_operations
+ * Render bulk operations dropdown above the roles table.
+ */
+function accessSchema_render_bulk_operations() {
+    ?>
+    <div class="tablenav top">
+        <div class="alignleft actions bulkactions">
+            <label for="bulk-action-selector-top" class="screen-reader-text">Select bulk action</label>
+            <select name="action" id="bulk-action-selector-top">
+                <option value="-1">Bulk Actions</option>
+                <option value="delete">Delete</option>
+                <option value="export">Export</option>
+            </select>
+            <input type="submit" id="doaction" class="button action" value="Apply">
+        </div>
+    </div>
+    <?php
+}
+
+/** accessSchema_handle_bulk_actions
+ * Handle bulk actions submitted from the roles table.
+ */
+add_action('admin_init', 'accessSchema_handle_bulk_actions');
+function accessSchema_handle_bulk_actions() {
+    if (!isset($_POST['action']) || $_POST['action'] === '-1') {
+        return;
+    }
+    
+    if (!isset($_POST['role_ids']) || !is_array($_POST['role_ids'])) {
+        return;
+    }
+    
+    if (!wp_verify_nonce($_POST['_wpnonce'], 'bulk-roles')) {
+        return;
+    }
+    
+    $action = sanitize_text_field($_POST['action']);
+    $role_ids = array_map('intval', $_POST['role_ids']);
+    
+    switch ($action) {
+        case 'delete':
+            foreach ($role_ids as $role_id) {
+                accessSchema_delete_role_cascade($role_id);
+            }
+            break;
+        case 'export':
+            accessSchema_export_roles($role_ids);
+            break;
+    }
+    
+    wp_redirect(add_query_arg('bulk_action', $action, wp_get_referer()));
+    exit;
+}
+
+// Add export function
+function accessSchema_export_roles($role_ids) {
+    global $wpdb;
+    $table = $wpdb->prefix . 'access_roles';
+    
+    $roles = $wpdb->get_results($wpdb->prepare(
+        "SELECT * FROM {$table} WHERE id IN (" . implode(',', array_fill(0, count($role_ids), '%d')) . ")",
+        ...$role_ids
+    ), ARRAY_A);
+    
+    header('Content-Type: text/csv');
+    header('Content-Disposition: attachment; filename="access_roles_export.csv"');
+    
+    $output = fopen('php://output', 'w');
+    fputcsv($output, array_keys($roles[0]));
+    
+    foreach ($roles as $role) {
+        fputcsv($output, $role);
+    }
+    
+    fclose($output);
+    exit;
+}
+
+// Add cascade delete function
+function accessSchema_delete_role_cascade($role_id) {
+    global $wpdb;
+    
+    // Delete from user_roles junction table first
+    $wpdb->delete(
+        $wpdb->prefix . 'access_user_roles',
+        ['role_id' => $role_id],
+        ['%d']
+    );
+    
+    // Delete the role
+    $wpdb->delete(
+        $wpdb->prefix . 'access_roles',
+        ['id' => $role_id],
+        ['%d']
+    );
+    
+    // Clear caches
+    wp_cache_flush();
+}

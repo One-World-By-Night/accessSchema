@@ -151,3 +151,103 @@ function accessSchema_save_user_roles( $user_id, $new_roles ) {
 
     return true;
 }
+
+/** accessSchema_add_role_optimized
+ * Add a role to a user using the junction table for better performance.
+ */
+function accessSchema_add_role_optimized( $user_id, $role_path, $performed_by = null ) {
+    global $wpdb;
+    
+    // Get role ID
+    $role_id = $wpdb->get_var($wpdb->prepare(
+        "SELECT id FROM {$wpdb->prefix}access_roles WHERE full_path = %s",
+        $role_path
+    ));
+    
+    if (!$role_id) {
+        accessSchema_log_event( $user_id, 'role_add_invalid', $role_path, [
+            'reason' => 'role_not_registered'
+        ], $performed_by, 'ERROR' );
+        return false;
+    }
+    
+    // Insert into junction table
+    $result = $wpdb->insert(
+        $wpdb->prefix . 'access_user_roles',
+        [
+            'user_id' => $user_id,
+            'role_id' => $role_id,
+            'granted_by' => $performed_by ?? get_current_user_id()
+        ],
+        ['%d', '%d', '%d']
+    );
+    
+    if ($result) {
+        accessSchema_log_event( $user_id, 'role_added', $role_path, null, $performed_by, 'INFO' );
+        wp_cache_delete( 'user_roles_' . $user_id, 'accessSchema' );
+    }
+    
+    return $result !== false;
+}
+
+/** accessSchema_remove_role_optimized 
+ * Remove a role from a user using the junction table for better performance.
+ */
+function accessSchema_remove_role_optimized( $user_id, $role_path, $performed_by = null ) {
+    global $wpdb;
+    
+    // Get role ID
+    $role_id = $wpdb->get_var($wpdb->prepare(
+        "SELECT id FROM {$wpdb->prefix}access_roles WHERE full_path = %s",
+        $role_path
+    ));
+    
+    if (!$role_id) {
+        return false;
+    }
+    
+    // Remove from junction table
+    $result = $wpdb->delete(
+        $wpdb->prefix . 'access_user_roles',
+        [
+            'user_id' => $user_id,
+            'role_id' => $role_id
+        ],
+        ['%d', '%d']
+    );
+    
+    if ($result) {
+        accessSchema_log_event( $user_id, 'role_removed', $role_path, null, $performed_by, 'INFO' );
+        wp_cache_delete( 'user_roles_' . $user_id, 'accessSchema' );
+    }
+    
+    return $result !== false;
+}
+
+/** accessSchema_get_user_roles
+ * Retrieve all roles assigned to a user using the junction table.
+ */
+function accessSchema_get_user_roles( $user_id, $use_cache = true ) {
+    $cache_key = 'user_roles_' . $user_id;
+    
+    if ($use_cache) {
+        $cached = wp_cache_get($cache_key, 'accessSchema');
+        if ($cached !== false) {
+            return $cached;
+        }
+    }
+    
+    global $wpdb;
+    $roles = $wpdb->get_col($wpdb->prepare(
+        "SELECT r.full_path 
+         FROM {$wpdb->prefix}access_user_roles ur
+         JOIN {$wpdb->prefix}access_roles r ON ur.role_id = r.id
+         WHERE ur.user_id = %d
+         ORDER BY r.full_path",
+        $user_id
+    ));
+    
+    wp_cache_set($cache_key, $roles, 'accessSchema', 3600); // 1 hour cache
+    
+    return $roles;
+}

@@ -131,32 +131,47 @@ function accessSchema_user_profile_update( $user_id ) {
         return;
     }
 
-    // Get the current assigned roles
-    $current_roles = get_user_meta( $user_id, 'accessSchema', true );
-    $current_roles = is_array( $current_roles ) ? $current_roles : [];
+    global $wpdb;
+    $table = $wpdb->prefix . 'access_user_roles';
+    
+    // Start transaction
+    $wpdb->query('START TRANSACTION');
+    
+    try {
+        // Get current roles from junction table
+        $current_roles = $wpdb->get_col($wpdb->prepare(
+            "SELECT r.full_path FROM {$table} ur 
+             JOIN {$wpdb->prefix}access_roles r ON ur.role_id = r.id 
+             WHERE ur.user_id = %d",
+            $user_id
+        ));
 
-    // Collect additions
-    $add_roles = isset( $_POST['accessSchema_add_roles'] ) && is_array( $_POST['accessSchema_add_roles'] )
-        ? array_map( 'sanitize_text_field', wp_unslash( $_POST['accessSchema_add_roles'] ) )
-        : [];
+        // Process additions and removals
+        $add_roles = isset( $_POST['accessSchema_add_roles'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['accessSchema_add_roles'] ) ) : [];
+        $remove_roles = isset( $_POST['accessSchema_remove_roles'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['accessSchema_remove_roles'] ) ) : [];
 
-    // Collect removals
-    $remove_roles = isset( $_POST['accessSchema_remove_roles'] ) && is_array( $_POST['accessSchema_remove_roles'] )
-        ? array_map( 'sanitize_text_field', wp_unslash( $_POST['accessSchema_remove_roles'] ) )
-        : [];
-
-    // Add new roles
-    foreach ( $add_roles as $role ) {
-        if ( ! in_array( $role, $current_roles, true ) ) {
-            accessSchema_add_role( $user_id, $role );
+        // Add new roles using junction table
+        foreach ( $add_roles as $role_path ) {
+            if ( ! in_array( $role_path, $current_roles, true ) ) {
+                accessSchema_add_role_optimized( $user_id, $role_path );
+            }
         }
-    }
 
-    // Remove selected roles
-    foreach ( $remove_roles as $role ) {
-        if ( in_array( $role, $current_roles, true ) ) {
-            accessSchema_remove_role( $user_id, $role );
+        // Remove roles
+        foreach ( $remove_roles as $role_path ) {
+            if ( in_array( $role_path, $current_roles, true ) ) {
+                accessSchema_remove_role_optimized( $user_id, $role_path );
+            }
         }
+        
+        $wpdb->query('COMMIT');
+        
+        // Clear caches
+        wp_cache_delete( 'user_roles_' . $user_id, 'accessSchema' );
+        
+    } catch (Exception $e) {
+        $wpdb->query('ROLLBACK');
+        error_log('AccessSchema role update failed: ' . $e->getMessage());
     }
 }
 

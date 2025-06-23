@@ -18,9 +18,16 @@ defined( 'ABSPATH' ) || exit;
 function accessSchema_check_permission( $user_id, $target_path, $include_children = false, $log = true, $context = [], $allow_wildcards = false ) {
     $target_path = trim( $target_path );
 
-    $roles = get_user_meta( $user_id, 'accessSchema', true );
-    if ( ! is_array( $roles ) ) {
-        $roles = [];
+    // Use optimized function with caching
+    $roles = accessSchema_get_user_roles( $user_id );
+    
+    if ( empty( $roles ) ) {
+        if ( $log ) {
+            accessSchema_log_event( $user_id, 'access_denied', $target_path, [
+                'reason' => 'no_roles_assigned',
+            ], null, 'WARN' );
+        }
+        return false;
     }
 
     $matched = false;
@@ -35,8 +42,8 @@ function accessSchema_check_permission( $user_id, $target_path, $include_childre
             }
         }
     } else {
-        // Optional: confirm it's a known role
-        if ( ! accessSchema_role_exists( $target_path ) ) {
+        // Use cached role check
+        if ( ! accessSchema_role_exists_cached( $target_path ) ) {
             if ( $log ) {
                 accessSchema_log_event( $user_id, 'role_check_invalid', $target_path, [
                     'reason' => 'role_not_registered',
@@ -74,6 +81,23 @@ function accessSchema_check_permission( $user_id, $target_path, $include_childre
     }
 
     return $matched;
+}
+
+/** accessSchema_role_exists_cached
+ * Check if a role exists, with caching to improve performance.
+ */
+function accessSchema_role_exists_cached( $role_path ) {
+    $cache_key = 'role_exists_' . md5($role_path);
+    $cached = wp_cache_get($cache_key, 'accessSchema');
+    
+    if ($cached !== false) {
+        return $cached;
+    }
+    
+    $exists = accessSchema_role_exists($role_path);
+    wp_cache_set($cache_key, $exists, 'accessSchema', 3600); // 1 hour cache
+    
+    return $exists;
 }
 
 /* Check to see if a user can access a specific role path.
