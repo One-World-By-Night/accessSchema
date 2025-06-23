@@ -82,41 +82,44 @@ function accessSchema_create_tables() {
     // Audit log table
     $audit_log_table = $wpdb->prefix . 'accessSchema_audit_log';
     $sql1 = "CREATE TABLE $audit_log_table (
-        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        user_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
-        action VARCHAR(64) NOT NULL,
-        role_path VARCHAR(255) NOT NULL,
-        context TEXT NULL,
-        performed_by BIGINT UNSIGNED DEFAULT NULL,
-        ip_address VARCHAR(45) DEFAULT NULL,
-        user_agent TEXT DEFAULT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_user_action (user_id, action),
-        INDEX idx_performed_by (performed_by),
-        INDEX idx_created_at (created_at),
-        INDEX idx_ip_address (ip_address)
-    ) $charset_collate;";
+        id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+        user_id bigint(20) unsigned NOT NULL DEFAULT 0,
+        action varchar(64) NOT NULL,
+        role_path varchar(255) NOT NULL,
+        context text NULL,
+        performed_by bigint(20) unsigned DEFAULT NULL,
+        ip_address varchar(45) DEFAULT NULL,
+        user_agent text DEFAULT NULL,
+        created_at datetime DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY  (id),
+        KEY idx_user_action (user_id, action),
+        KEY idx_performed_by (performed_by),
+        KEY idx_created_at (created_at),
+        KEY idx_ip_address (ip_address)
+    ) $charset_collate";
     
-    $result1 = dbDelta($sql1);
-    if (empty($result1[$audit_log_table])) {
-        $errors[] = 'Failed to create audit log table';
+    dbDelta($sql1);
+    
+    if ($wpdb->last_error) {
+        $errors[] = 'Failed to create audit log table: ' . $wpdb->last_error;
     }
     
     // Roles table
     $roles_table = $wpdb->prefix . 'accessSchema_roles';
     $sql2 = "CREATE TABLE $roles_table (
-        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        parent_id BIGINT UNSIGNED DEFAULT NULL,
-        name VARCHAR(191) NOT NULL,
-        slug VARCHAR(191) NOT NULL,
-        full_path VARCHAR(767) NOT NULL,
-        capabilities TEXT DEFAULT NULL,
-        meta TEXT DEFAULT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        created_by BIGINT UNSIGNED DEFAULT NULL,
-        depth TINYINT UNSIGNED DEFAULT 0,
-        is_active BOOLEAN DEFAULT TRUE,
+        id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+        parent_id bigint(20) unsigned DEFAULT NULL,
+        name varchar(191) NOT NULL,
+        slug varchar(191) NOT NULL,
+        full_path varchar(500) NOT NULL,
+        capabilities text DEFAULT NULL,
+        meta text DEFAULT NULL,
+        created_at datetime DEFAULT CURRENT_TIMESTAMP,
+        updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_by bigint(20) unsigned DEFAULT NULL,
+        depth tinyint(3) unsigned DEFAULT 0,
+        is_active tinyint(1) DEFAULT 1,
+        PRIMARY KEY  (id),
         UNIQUE KEY unique_slug_per_parent (slug, parent_id),
         UNIQUE KEY unique_full_path (full_path),
         KEY idx_parent_id (parent_id),
@@ -125,46 +128,50 @@ function accessSchema_create_tables() {
         KEY idx_depth (depth),
         KEY idx_is_active (is_active),
         KEY idx_full_path_prefix (full_path(191))
-    ) $charset_collate;";
+    ) $charset_collate";
     
-    $result2 = dbDelta($sql2);
-    if (empty($result2[$roles_table])) {
-        $errors[] = 'Failed to create roles table';
+    dbDelta($sql2);
+    
+    if ($wpdb->last_error) {
+        $errors[] = 'Failed to create roles table: ' . $wpdb->last_error;
     }
     
     // User roles junction table
     $user_roles_table = $wpdb->prefix . 'accessSchema_user_roles';
     $sql3 = "CREATE TABLE $user_roles_table (
-        user_id BIGINT UNSIGNED NOT NULL,
-        role_id BIGINT UNSIGNED NOT NULL,
-        granted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        granted_by BIGINT UNSIGNED DEFAULT NULL,
-        expires_at DATETIME DEFAULT NULL,
-        is_active BOOLEAN DEFAULT TRUE,
-        PRIMARY KEY (user_id, role_id),
+        user_id bigint(20) unsigned NOT NULL,
+        role_id bigint(20) unsigned NOT NULL,
+        granted_at datetime DEFAULT CURRENT_TIMESTAMP,
+        granted_by bigint(20) unsigned DEFAULT NULL,
+        expires_at datetime DEFAULT NULL,
+        is_active tinyint(1) DEFAULT 1,
+        PRIMARY KEY  (user_id, role_id),
         KEY idx_role_id (role_id),
         KEY idx_granted_at (granted_at),
         KEY idx_expires_at (expires_at),
         KEY idx_is_active (is_active)
-    ) $charset_collate;";
+    ) $charset_collate";
     
-    $result3 = dbDelta($sql3);
-    if (empty($result3[$user_roles_table])) {
-        $errors[] = 'Failed to create user roles table';
+    dbDelta($sql3);
+    
+    if ($wpdb->last_error) {
+        $errors[] = 'Failed to create user roles table: ' . $wpdb->last_error;
     }
     
     // Permissions cache table
     $permissions_cache = $wpdb->prefix . 'accessSchema_permissions_cache';
     $sql4 = "CREATE TABLE $permissions_cache (
-        user_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
-        permissions TEXT NOT NULL,
-        calculated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_calculated_at (calculated_at)
-    ) $charset_collate;";
+        user_id bigint(20) unsigned NOT NULL,
+        permissions text NOT NULL,
+        calculated_at datetime DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY  (user_id),
+        KEY idx_calculated_at (calculated_at)
+    ) $charset_collate";
     
-    $result4 = dbDelta($sql4);
-    if (empty($result4[$permissions_cache])) {
-        $errors[] = 'Failed to create permissions cache table';
+    dbDelta($sql4);
+    
+    if ($wpdb->last_error) {
+        $errors[] = 'Failed to create permissions cache table: ' . $wpdb->last_error;
     }
     
     // Return errors if any

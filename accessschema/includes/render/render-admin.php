@@ -1,7 +1,7 @@
 <?php
 /**
  * File: includes/render/render-admin.php
- * @version 2.0.0
+ * @version 1.7.0
  * Author: greghacke
  */
 
@@ -64,7 +64,21 @@ function accessSchema_render_user_role_ui($user) {
     }
     
     $all_roles = accessSchema_get_available_roles();
-    $assigned = accessSchema_get_user_roles($user->ID);
+    // Filter to only show leaf roles (deepest in hierarchy)
+    $leaf_roles = array();
+    foreach ($assigned as $role) {
+        $is_leaf = true;
+        foreach ($assigned as $other_role) {
+            if ($role !== $other_role && strpos($other_role, $role . '/') === 0) {
+                $is_leaf = false;
+                break;
+            }
+        }
+        if ($is_leaf) {
+            $leaf_roles[] = $role;
+        }
+    }
+    $assigned = $leaf_roles;
     
     // Enqueue assets
     $base_url = ACCESSSCHEMA_PLUGIN_URL . 'assets/';
@@ -106,10 +120,11 @@ function accessSchema_render_user_role_select($all_roles, $assigned, $user_id) {
                         <?php foreach ($assigned as $role) : ?>
                             <?php
                             $role_info = isset($all_roles['hierarchy'][$role]) ? $all_roles['hierarchy'][$role] : null;
-                            $display_name = $role_info ? $role_info['name'] : $role;
+                            // Show full path for clarity
+                            $display_name = $role;
                             ?>
                             <span class="access-role-tag" data-role="<?php echo esc_attr($role); ?>">
-                                <span class="role-name" title="<?php echo esc_attr($role); ?>">
+                                <span class="role-name" title="<?php echo esc_attr($role_info ? $role_info['name'] : $role); ?>">
                                     <?php echo esc_html($display_name); ?>
                                 </span>
                                 <button type="button" class="remove-role-button" aria-label="<?php esc_attr_e('Remove role', 'accessschema'); ?>">

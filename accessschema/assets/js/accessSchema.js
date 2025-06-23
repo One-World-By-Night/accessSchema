@@ -244,8 +244,9 @@
                 const $container = $('#accessSchema-assigned-roles');
                 $container.find('.no-roles-message').remove();
                 
+                // Use full path (data.id) for display
                 const $tag = $('<span class="access-role-tag" data-role="' + escapeHtml(data.id) + '">' +
-                    '<span class="role-name" title="' + escapeHtml(data.id) + '">' + escapeHtml(data.text) + '</span>' +
+                    '<span class="role-name" title="' + escapeHtml(data.text) + '">' + escapeHtml(data.id) + '</span>' +
                     '<button type="button" class="remove-role-button" aria-label="Remove role">' +
                     '<span aria-hidden="true">×</span></button>' +
                     '<input type="hidden" name="accessSchema_current_roles[]" value="' + escapeHtml(data.id) + '">' +

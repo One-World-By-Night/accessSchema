@@ -161,6 +161,7 @@ function accessSchema_validate_role_assignment($user_id, $new_role, $existing_ro
 
 /**
  * Get all roles assigned to a user.
+ * NOTE: This now returns ONLY the exact roles assigned, not parent roles.
  */
 function accessSchema_get_user_roles($user_id, $include_expired = false, $use_cache = true) {
     $cache_key = 'user_roles_' . $user_id . ($include_expired ? '_all' : '');
@@ -194,23 +195,18 @@ function accessSchema_get_user_roles($user_id, $include_expired = false, $use_ca
     
     $roles = $wpdb->get_col($wpdb->prepare($query, ...$params));
     
-    // Include inherited roles
-    $all_roles = array();
-    foreach ($roles as $role) {
-        $all_roles[] = $role;
-        $all_roles = array_merge($all_roles, accessSchema_get_parent_roles($role));
-    }
+    // Just return the exact roles without parent inheritance
+    $roles = array_unique($roles);
+    sort($roles);
     
-    $all_roles = array_unique($all_roles);
-    sort($all_roles);
+    wp_cache_set($cache_key, $roles, 'accessSchema', 3600);
     
-    wp_cache_set($cache_key, $all_roles, 'accessSchema', 3600);
-    
-    return $all_roles;
+    return $roles;
 }
 
 /**
- * Get parent roles for inheritance.
+ * Get parent roles for a given role path.
+ * This is now a utility function, not automatically included in user roles.
  */
 function accessSchema_get_parent_roles($role_path) {
     $parents = array();
@@ -224,6 +220,25 @@ function accessSchema_get_parent_roles($role_path) {
     }
     
     return $parents;
+}
+
+/**
+ * Get all roles including inherited parent roles.
+ * Use this when you need the full hierarchy.
+ */
+function accessSchema_get_user_roles_with_inheritance($user_id, $include_expired = false) {
+    $direct_roles = accessSchema_get_user_roles($user_id, $include_expired);
+    $all_roles = array();
+    
+    foreach ($direct_roles as $role) {
+        $all_roles[] = $role;
+        $all_roles = array_merge($all_roles, accessSchema_get_parent_roles($role));
+    }
+    
+    $all_roles = array_unique($all_roles);
+    sort($all_roles);
+    
+    return $all_roles;
 }
 
 /**
