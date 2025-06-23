@@ -1,234 +1,169 @@
 <?php
-// File: includes/core/user-roles.php
-// @version 1.7.0
-// Author: greghacke
-
-defined( 'ABSPATH' ) || exit;
-
-/* Add a role path to a user’s accessSchema meta with validation.
- *
- * @param int       $user_id      The user to assign the role to.
- * @param string    $role_path    The role path to add (e.g. 'Chronicles/MCKN/HST').
- * @param int|null  $performed_by Optional — who performed the action.
- *
- * @return bool True if added, false if rejected or duplicate.
+/**
+ * File: includes/core/user-roles.php
+ * @version 1.7.0
+ * Author: greghacke
  */
-function accessSchema_add_role( $user_id, $role_path, $performed_by = null ) {
-    $role_path = trim( $role_path );
 
-    // Validate that the role is actually registered in the DB
-    if ( ! accessSchema_role_exists( $role_path ) ) {
-        accessSchema_log_event( $user_id, 'role_add_invalid', $role_path, [
+defined('ABSPATH') || exit;
+
+/**
+ * Add a role path to a user with validation.
+ */
+function accessSchema_add_role($user_id, $role_path, $performed_by = null, $expires_at = null) {
+    $role_path = trim($role_path);
+    
+    // Validate role exists
+    if (!accessSchema_role_exists($role_path)) {
+        accessSchema_log_event($user_id, 'role_add_invalid', $role_path, array(
             'reason' => 'role_not_registered'
-        ], $performed_by, 'ERROR' );
+        ), $performed_by, 'ERROR');
         return false;
     }
-
-    // Retrieve existing roles assigned to this user
-    $roles = get_user_meta( $user_id, 'accessSchema', true );
-    if ( ! is_array( $roles ) ) {
-        $roles = [];
+    
+    global $wpdb;
+    $roles_table = $wpdb->prefix . 'accessSchema_roles';
+    $user_roles_table = $wpdb->prefix . 'accessSchema_user_roles';
+    
+    // Get role ID
+    $role_id = $wpdb->get_var($wpdb->prepare(
+        "SELECT id FROM {$roles_table} WHERE full_path = %s AND is_active = 1",
+        $role_path
+    ));
+    
+    if (!$role_id) {
+        return false;
     }
-
-    // Prevent duplicate role assignment
-    if ( in_array( $role_path, $roles, true ) ) {
-        accessSchema_log_event( $user_id, 'role_add_skipped', $role_path, [
+    
+    // Check if already assigned
+    $existing = $wpdb->get_var($wpdb->prepare(
+        "SELECT 1 FROM {$user_roles_table} WHERE user_id = %d AND role_id = %d",
+        $user_id,
+        $role_id
+    ));
+    
+    if ($existing) {
+        accessSchema_log_event($user_id, 'role_add_skipped', $role_path, array(
             'reason' => 'already_assigned'
-        ], $performed_by, 'DEBUG' );
+        ), $performed_by, 'DEBUG');
         return false;
     }
-
-    // Custom rule hook — can be overridden to prevent conflicting roles
-    if ( ! accessSchema_validate_role_assignment( $user_id, $role_path, $roles ) ) {
-        accessSchema_log_event( $user_id, 'role_add_blocked', $role_path, [
+    
+    // Validate assignment
+    $current_roles = accessSchema_get_user_roles($user_id);
+    if (!accessSchema_validate_role_assignment($user_id, $role_path, $current_roles)) {
+        accessSchema_log_event($user_id, 'role_add_blocked', $role_path, array(
             'reason' => 'validation_failed',
-            'existing_roles' => $roles,
-        ], $performed_by, 'WARN' );
+            'existing_roles' => $current_roles
+        ), $performed_by, 'WARN');
         return false;
     }
-
-    // Add role and persist to usermeta
-    $roles[] = $role_path;
-    update_user_meta( $user_id, 'accessSchema', $roles );
-
-    accessSchema_log_event( $user_id, 'role_added', $role_path, null, $performed_by, 'INFO' );
-    return true;
+    
+    // Insert role assignment
+    $result = $wpdb->insert(
+        $user_roles_table,
+        array(
+            'user_id' => $user_id,
+            'role_id' => $role_id,
+            'granted_by' => $performed_by ?: get_current_user_id(),
+            'expires_at' => $expires_at
+        ),
+        array('%d', '%d', '%d', '%s')
+    );
+    
+    if ($result) {
+        accessSchema_log_event($user_id, 'role_added', $role_path, array(
+            'expires_at' => $expires_at
+        ), $performed_by, 'INFO');
+        
+        // Clear cache
+        wp_cache_delete('user_roles_' . $user_id, 'accessSchema');
+        wp_cache_delete('user_permissions_' . $user_id, 'accessSchema');
+        
+        // Trigger action
+        do_action('accessSchema_role_added', $user_id, $role_path, $performed_by);
+    }
+    
+    return $result !== false;
 }
 
-/* Remove a role path from a user’s accessSchema meta.
- *
- * @param int       $user_id      The user to remove the role from.
- * @param string    $role_path    The role path to remove (e.g. 'Chronicles/MCKN/HST').
- * @param int|null  $performed_by Optional — who performed the action.
- *
- * @return bool True if removed, false if not found or invalid.
+/**
+ * Remove a role path from a user.
  */
-function accessSchema_remove_role( $user_id, $role_path, $performed_by = null ) {
-    $role_path = trim( $role_path );
-
-    // Validate that the role is officially registered
-    if ( ! accessSchema_role_exists( $role_path ) ) {
-        accessSchema_log_event( $user_id, 'role_remove_invalid', $role_path, [
-            'reason' => 'role_not_registered'
-        ], $performed_by, 'ERROR' );
+function accessSchema_remove_role($user_id, $role_path, $performed_by = null) {
+    $role_path = trim($role_path);
+    
+    global $wpdb;
+    $roles_table = $wpdb->prefix . 'accessSchema_roles';
+    $user_roles_table = $wpdb->prefix . 'accessSchema_user_roles';
+    
+    // Get role ID
+    $role_id = $wpdb->get_var($wpdb->prepare(
+        "SELECT id FROM {$roles_table} WHERE full_path = %s",
+        $role_path
+    ));
+    
+    if (!$role_id) {
+        accessSchema_log_event($user_id, 'role_remove_invalid', $role_path, array(
+            'reason' => 'role_not_found'
+        ), $performed_by, 'ERROR');
         return false;
     }
-
-    $roles = get_user_meta( $user_id, 'accessSchema', true );
-    if ( ! is_array( $roles ) ) {
-        $roles = [];
+    
+    // Remove assignment
+    $result = $wpdb->delete(
+        $user_roles_table,
+        array(
+            'user_id' => $user_id,
+            'role_id' => $role_id
+        ),
+        array('%d', '%d')
+    );
+    
+    if ($result) {
+        accessSchema_log_event($user_id, 'role_removed', $role_path, null, $performed_by, 'INFO');
+        
+        // Clear cache
+        wp_cache_delete('user_roles_' . $user_id, 'accessSchema');
+        wp_cache_delete('user_permissions_' . $user_id, 'accessSchema');
+        
+        // Trigger action
+        do_action('accessSchema_role_removed', $user_id, $role_path, $performed_by);
     }
-
-    // If user doesn't actually have this role
-    if ( ! in_array( $role_path, $roles, true ) ) {
-        accessSchema_log_event( $user_id, 'role_remove_skipped', $role_path, [
-            'reason' => 'not_assigned'
-        ], $performed_by, 'DEBUG' );
-        return false;
-    }
-
-    // Remove the role and update user meta
-    $updated_roles = array_values( array_diff( $roles, [ $role_path ] ) );
-    update_user_meta( $user_id, 'accessSchema', $updated_roles );
-
-    accessSchema_log_event( $user_id, 'role_removed', $role_path, null, $performed_by, 'INFO' );
-    return true;
+    
+    return $result !== false;
 }
 
-/*  Validate whether a role can be assigned to a user.
- *
- * Extend this to enforce custom constraints (e.g., only one CM role per user).
- *
- * @param int    $user_id        The user ID being assigned a role.
- * @param string $new_role       The role path being assigned (e.g., 'Chronicles/MCKN/CM').
- * @param array  $existing_roles An array of the user's current role paths.
- *
- * @return bool True if the role can be assigned; false otherwise.
+/**
+ * Validate whether a role can be assigned to a user.
  */
-function accessSchema_validate_role_assignment( $user_id, $new_role, $existing_roles ) {
-    // Example rule (disabled for now):
-    // - Block assigning more than one CM role
-    /*
-    if ( preg_match( '#^Chronicles/[^/]+/CM$#', $new_role ) ) {
-        foreach ( $existing_roles as $role ) {
-            if ( preg_match( '#^Chronicles/[^/]+/CM$#', $role ) ) {
+function accessSchema_validate_role_assignment($user_id, $new_role, $existing_roles) {
+    // Check for role conflicts
+    $conflicts = apply_filters('accessSchema_role_conflicts', array(), $new_role);
+    
+    foreach ($conflicts as $conflict_pattern) {
+        foreach ($existing_roles as $role) {
+            if (fnmatch($conflict_pattern, $role)) {
                 return false;
             }
         }
     }
-    */
-
-    // Default: allow all
-    return true;
-}
-
-/* Save user roles from the profile update.
- *
- * This function is called when a user profile is updated to save the accessSchema roles.
- * It compares the new roles with existing ones and updates accordingly.
- *
- * @param int   $user_id    The ID of the user being updated.
- * @param array $new_roles  The new roles to assign to the user.
- *
- * @return bool True on success, false on failure.
- */
-function accessSchema_save_user_roles( $user_id, $new_roles ) {
-    $existing_roles = get_user_meta( $user_id, 'accessSchema', true );
-    if ( ! is_array( $existing_roles ) ) {
-        $existing_roles = [];
-    }
-
-    $to_add = array_diff( $new_roles, $existing_roles );
-    $to_remove = array_diff( $existing_roles, $new_roles );
-
-    foreach ( $to_add as $role ) {
-        accessSchema_add_role( $user_id, $role );
-    }
-
-    foreach ( $to_remove as $role ) {
-        accessSchema_remove_role( $user_id, $role );
-    }
-
-    return true;
-}
-
-/** accessSchema_add_role_optimized
- * Add a role to a user using the junction table for better performance.
- */
-function accessSchema_add_role_optimized( $user_id, $role_path, $performed_by = null ) {
-    global $wpdb;
     
-    // Get role ID
-    $role_id = $wpdb->get_var($wpdb->prepare(
-        "SELECT id FROM {$wpdb->prefix}access_roles WHERE full_path = %s",
-        $role_path
-    ));
-    
-    if (!$role_id) {
-        accessSchema_log_event( $user_id, 'role_add_invalid', $role_path, [
-            'reason' => 'role_not_registered'
-        ], $performed_by, 'ERROR' );
+    // Check max roles per user
+    $max_roles = apply_filters('accessSchema_max_roles_per_user', 50, $user_id);
+    if (count($existing_roles) >= $max_roles) {
         return false;
     }
     
-    // Insert into junction table
-    $result = $wpdb->insert(
-        $wpdb->prefix . 'access_user_roles',
-        [
-            'user_id' => $user_id,
-            'role_id' => $role_id,
-            'granted_by' => $performed_by ?? get_current_user_id()
-        ],
-        ['%d', '%d', '%d']
-    );
-    
-    if ($result) {
-        accessSchema_log_event( $user_id, 'role_added', $role_path, null, $performed_by, 'INFO' );
-        wp_cache_delete( 'user_roles_' . $user_id, 'accessSchema' );
-    }
-    
-    return $result !== false;
+    // Allow custom validation
+    return apply_filters('accessSchema_validate_role_assignment', true, $user_id, $new_role, $existing_roles);
 }
 
-/** accessSchema_remove_role_optimized 
- * Remove a role from a user using the junction table for better performance.
+/**
+ * Get all roles assigned to a user.
  */
-function accessSchema_remove_role_optimized( $user_id, $role_path, $performed_by = null ) {
-    global $wpdb;
-    
-    // Get role ID
-    $role_id = $wpdb->get_var($wpdb->prepare(
-        "SELECT id FROM {$wpdb->prefix}access_roles WHERE full_path = %s",
-        $role_path
-    ));
-    
-    if (!$role_id) {
-        return false;
-    }
-    
-    // Remove from junction table
-    $result = $wpdb->delete(
-        $wpdb->prefix . 'access_user_roles',
-        [
-            'user_id' => $user_id,
-            'role_id' => $role_id
-        ],
-        ['%d', '%d']
-    );
-    
-    if ($result) {
-        accessSchema_log_event( $user_id, 'role_removed', $role_path, null, $performed_by, 'INFO' );
-        wp_cache_delete( 'user_roles_' . $user_id, 'accessSchema' );
-    }
-    
-    return $result !== false;
-}
-
-/** accessSchema_get_user_roles
- * Retrieve all roles assigned to a user using the junction table.
- */
-function accessSchema_get_user_roles( $user_id, $use_cache = true ) {
-    $cache_key = 'user_roles_' . $user_id;
+function accessSchema_get_user_roles($user_id, $include_expired = false, $use_cache = true) {
+    $cache_key = 'user_roles_' . $user_id . ($include_expired ? '_all' : '');
     
     if ($use_cache) {
         $cached = wp_cache_get($cache_key, 'accessSchema');
@@ -238,16 +173,214 @@ function accessSchema_get_user_roles( $user_id, $use_cache = true ) {
     }
     
     global $wpdb;
-    $roles = $wpdb->get_col($wpdb->prepare(
-        "SELECT r.full_path 
-         FROM {$wpdb->prefix}access_user_roles ur
-         JOIN {$wpdb->prefix}access_roles r ON ur.role_id = r.id
-         WHERE ur.user_id = %d
-         ORDER BY r.full_path",
-        $user_id
+    $roles_table = $wpdb->prefix . 'accessSchema_roles';
+    $user_roles_table = $wpdb->prefix . 'accessSchema_user_roles';
+    
+    $query = "SELECT r.full_path 
+              FROM {$user_roles_table} ur
+              JOIN {$roles_table} r ON ur.role_id = r.id
+              WHERE ur.user_id = %d 
+              AND ur.is_active = 1 
+              AND r.is_active = 1";
+    
+    $params = array($user_id);
+    
+    if (!$include_expired) {
+        $query .= " AND (ur.expires_at IS NULL OR ur.expires_at > %s)";
+        $params[] = current_time('mysql');
+    }
+    
+    $query .= " ORDER BY r.full_path";
+    
+    $roles = $wpdb->get_col($wpdb->prepare($query, ...$params));
+    
+    // Include inherited roles
+    $all_roles = array();
+    foreach ($roles as $role) {
+        $all_roles[] = $role;
+        $all_roles = array_merge($all_roles, accessSchema_get_parent_roles($role));
+    }
+    
+    $all_roles = array_unique($all_roles);
+    sort($all_roles);
+    
+    wp_cache_set($cache_key, $all_roles, 'accessSchema', 3600);
+    
+    return $all_roles;
+}
+
+/**
+ * Get parent roles for inheritance.
+ */
+function accessSchema_get_parent_roles($role_path) {
+    $parents = array();
+    $parts = explode('/', $role_path);
+    
+    for ($i = count($parts) - 1; $i > 0; $i--) {
+        $parent_path = implode('/', array_slice($parts, 0, $i));
+        if (accessSchema_role_exists($parent_path)) {
+            $parents[] = $parent_path;
+        }
+    }
+    
+    return $parents;
+}
+
+/**
+ * Bulk update user roles.
+ */
+function accessSchema_save_user_roles($user_id, $new_roles, $performed_by = null) {
+    $existing_roles = accessSchema_get_user_roles($user_id, true, false);
+    
+    $to_add = array_diff($new_roles, $existing_roles);
+    $to_remove = array_diff($existing_roles, $new_roles);
+    
+    global $wpdb;
+    $wpdb->query('START TRANSACTION');
+    
+    try {
+        foreach ($to_add as $role) {
+            if (!accessSchema_add_role($user_id, $role, $performed_by)) {
+                throw new Exception("Failed to add role: $role");
+            }
+        }
+        
+        foreach ($to_remove as $role) {
+            if (!accessSchema_remove_role($user_id, $role, $performed_by)) {
+                throw new Exception("Failed to remove role: $role");
+            }
+        }
+        
+        $wpdb->query('COMMIT');
+        
+        // Log bulk update
+        accessSchema_log_event($user_id, 'roles_bulk_updated', '', array(
+            'added' => $to_add,
+            'removed' => $to_remove
+        ), $performed_by, 'INFO');
+        
+        return true;
+        
+    } catch (Exception $e) {
+        $wpdb->query('ROLLBACK');
+        error_log('accessSchema: Bulk role update failed - ' . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Check and remove expired roles.
+ */
+function accessSchema_cleanup_expired_roles() {
+    global $wpdb;
+    $user_roles_table = $wpdb->prefix . 'accessSchema_user_roles';
+    
+    // Get expired assignments
+    $expired = $wpdb->get_results($wpdb->prepare(
+        "SELECT user_id, role_id FROM {$user_roles_table} 
+         WHERE expires_at IS NOT NULL 
+         AND expires_at < %s 
+         AND is_active = 1
+         LIMIT 100",
+        current_time('mysql')
+    ), ARRAY_A);
+    
+    if (empty($expired)) {
+        return 0;
+    }
+    
+    $count = 0;
+    foreach ($expired as $assignment) {
+        $result = $wpdb->update(
+            $user_roles_table,
+            array('is_active' => 0),
+            array(
+                'user_id' => $assignment['user_id'],
+                'role_id' => $assignment['role_id']
+            ),
+            array('%d'),
+            array('%d', '%d')
+        );
+        
+        if ($result) {
+            $count++;
+            // Clear user cache
+            wp_cache_delete('user_roles_' . $assignment['user_id'], 'accessSchema');
+            wp_cache_delete('user_permissions_' . $assignment['user_id'], 'accessSchema');
+        }
+    }
+    
+    if ($count > 0) {
+        accessSchema_log_event(0, 'expired_roles_cleaned', '', array(
+            'count' => $count
+        ), 0, 'INFO');
+    }
+    
+    return $count;
+}
+
+// Schedule cleanup
+add_action('accessSchema_daily_cleanup', 'accessSchema_cleanup_expired_roles');
+
+/**
+ * Get users by role.
+ */
+function accessSchema_get_users_by_role($role_path, $args = array()) {
+    global $wpdb;
+    $roles_table = $wpdb->prefix . 'accessSchema_roles';
+    $user_roles_table = $wpdb->prefix . 'accessSchema_user_roles';
+    
+    $defaults = array(
+        'number' => -1,
+        'offset' => 0,
+        'orderby' => 'display_name',
+        'order' => 'ASC',
+        'include_children' => false
+    );
+    
+    $args = wp_parse_args($args, $defaults);
+    
+    // Get role ID(s)
+    $role_ids = array();
+    
+    $role_id = $wpdb->get_var($wpdb->prepare(
+        "SELECT id FROM {$roles_table} WHERE full_path = %s AND is_active = 1",
+        $role_path
     ));
     
-    wp_cache_set($cache_key, $roles, 'accessSchema', 3600); // 1 hour cache
+    if (!$role_id) {
+        return array();
+    }
     
-    return $roles;
+    $role_ids[] = $role_id;
+    
+    if ($args['include_children']) {
+        $children = accessSchema_get_role_descendants($role_id);
+        $role_ids = array_merge($role_ids, $children);
+    }
+    
+    // Build query
+    $placeholders = implode(',', array_fill(0, count($role_ids), '%d'));
+    
+    $query = "SELECT DISTINCT u.* 
+              FROM {$wpdb->users} u
+              JOIN {$user_roles_table} ur ON u.ID = ur.user_id
+              WHERE ur.role_id IN ($placeholders)
+              AND ur.is_active = 1
+              AND (ur.expires_at IS NULL OR ur.expires_at > %s)";
+    
+    $query_args = array_merge($role_ids, array(current_time('mysql')));
+    
+    // Add ordering
+    $allowed_orderby = array('ID', 'display_name', 'user_login', 'user_registered');
+    if (in_array($args['orderby'], $allowed_orderby)) {
+        $query .= " ORDER BY u.{$args['orderby']} {$args['order']}";
+    }
+    
+    // Add limit
+    if ($args['number'] > 0) {
+        $query .= $wpdb->prepare(" LIMIT %d OFFSET %d", $args['number'], $args['offset']);
+    }
+    
+    return $wpdb->get_results($wpdb->prepare($query, ...$query_args));
 }
