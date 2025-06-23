@@ -1,7 +1,7 @@
 <?php
 /**
  * File: includes/render/render-admin.php
- * @version 1.7.0
+ * @version 2.0.0
  * Author: greghacke
  */
 
@@ -64,6 +64,8 @@ function accessSchema_render_user_role_ui($user) {
     }
     
     $all_roles = accessSchema_get_available_roles();
+    $assigned = accessSchema_get_user_roles($user->ID);
+    
     // Filter to only show leaf roles (deepest in hierarchy)
     $leaf_roles = array();
     foreach ($assigned as $role) {
