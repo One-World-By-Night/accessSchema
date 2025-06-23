@@ -30,6 +30,7 @@ $required_files = array(
     'includes/core/helpers.php',
     'includes/core/webhook-router.php',
     'includes/render/render-admin.php',
+    'includes/render/render-functions.php',
     'includes/admin/role-manager.php',
     'includes/shortcodes/access.php',
     'includes/utils/access-utils.php'
