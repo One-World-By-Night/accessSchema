@@ -47,3 +47,37 @@ function accessSchema_activate() {
     ";
     dbDelta( $sql2 );
 }
+
+/** accessSchema_db_operation 
+ * Wrapper for database operations with error handling and logging.
+ */
+function accessSchema_db_operation($callback, $error_message = 'Database operation failed') {
+    global $wpdb;
+    
+    $result = $callback();
+    
+    if ($result === false) {
+        $error = $wpdb->last_error ?: $error_message;
+        accessSchema_log_event(0, 'db_error', '', ['error' => $error], null, 'ERROR');
+        
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('AccessSchema DB Error: ' . $error);
+        }
+        
+        return new WP_Error('db_error', $error);
+    }
+    
+    return $result;
+}
+
+/** accessSchema_add_capabilities 
+ * Add custom capabilities to administrator role.
+ */
+function accessSchema_add_capabilities() {
+    $admin = get_role('administrator');
+    if ($admin) {
+        $admin->add_cap('manage_access_schema');
+        $admin->add_cap('assign_access_roles');
+        $admin->add_cap('view_access_logs');
+    }
+}

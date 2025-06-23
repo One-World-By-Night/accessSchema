@@ -21,7 +21,7 @@ delete_option('accessschema_remote_cache');
 global $wpdb;
 
 $roles_table = $wpdb->prefix . 'access_roles';
-$audit_table = $wpdb->prefix . 'acces_audit_logs';
+$audit_table = $wpdb->prefix . 'access_audit_logs';
 
 $wpdb->query("DROP TABLE IF EXISTS $roles_table");
 $wpdb->query("DROP TABLE IF EXISTS $audit_table");

@@ -52,3 +52,30 @@ function accessSchema_access_granted( $patterns ) {
 function accessSchema_access_denied( $patterns ) {
     return ! accessSchema_access_granted( $patterns );
 }
+
+/** accessSchema_can_manage_roles
+ * Check if the current user can manage roles.
+ */
+function accessSchema_can_manage_roles($user_id = null) {
+    $user_id = $user_id ?: get_current_user_id();
+    return user_can($user_id, 'manage_access_schema');
+}
+
+/** accessSchema_can_assign_roles
+ * Check if the current user can assign roles, optionally to a specific target user.
+ */
+function accessSchema_can_assign_roles($user_id = null, $target_user_id = null) {
+    $user_id = $user_id ?: get_current_user_id();
+    
+    // Can manage all roles
+    if (user_can($user_id, 'manage_access_schema')) {
+        return true;
+    }
+    
+    // Can only assign to users they can edit
+    if ($target_user_id && user_can($user_id, 'edit_user', $target_user_id)) {
+        return user_can($user_id, 'assign_access_roles');
+    }
+    
+    return false;
+}
