@@ -1,7 +1,7 @@
 <?php
 /**
  * File: includes/render/render-functions.php
- * @version 2.0.0
+ * * * @version 2.0.2
  * Author: greghacke
  */
 
