@@ -1,7 +1,7 @@
 <?php
 /**
  * File: includes/core/webhook-router.php
- * @version 2.0.0
+ * * * @version 2.0.2
  * Author: greghacke
  * 
  * Access Schema REST API Routes
@@ -45,6 +45,13 @@ add_action('rest_api_init', function () {
     register_rest_route('access-schema/v1', '/roles', array(
         'methods' => 'POST',
         'callback' => 'accessSchema_api_get_roles',
+        'permission_callback' => 'accessSchema_api_permission_check',
+    ));
+
+    // Get all registered roles
+    register_rest_route('access-schema/v1', '/roles/all', array(
+        'methods' => 'GET',
+        'callback' => 'accessSchema_api_get_all_roles',
         'permission_callback' => 'accessSchema_api_permission_check',
     ));
 
@@ -146,6 +153,7 @@ function accessSchema_api_permission_check($request) {
     // Define endpoint permissions
     $read_endpoints = array(
         '/access-schema/v1/roles',
+        '/access-schema/v1/roles/all',
         '/access-schema/v1/check'
     );
     
@@ -433,6 +441,45 @@ function accessSchema_api_check_permission($request) {
         'email' => $user->user_email,
         'granted' => $has_access,
     ));
+}
+
+// Get all roles endpoint
+function accessSchema_api_get_all_roles($request) {
+    // Get all roles with hierarchy
+    $roles = accessSchema_get_all_roles();
+    
+    // Flatten for API response
+    $response = array(
+        'total' => 0,
+        'roles' => array(),
+        'hierarchy' => $roles
+    );
+    
+    // Create flat list with full details
+    $flat_roles = array();
+    accessSchema_flatten_roles($roles, $flat_roles);
+    
+    $response['roles'] = $flat_roles;
+    $response['total'] = count($flat_roles);
+    
+    return rest_ensure_response($response);
+}
+
+// Helper to flatten role hierarchy
+function accessSchema_flatten_roles($nodes, &$result) {
+    foreach ($nodes as $node) {
+        $result[] = array(
+            'id' => $node['id'],
+            'name' => $node['name'],
+            'path' => $node['full_path'],
+            'depth' => $node['depth'],
+            'parent_id' => $node['parent_id']
+        );
+        
+        if (!empty($node['children'])) {
+            accessSchema_flatten_roles($node['children'], $result);
+        }
+    }
 }
 
 // Add CORS headers

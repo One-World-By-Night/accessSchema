@@ -42,3 +42,9 @@ Client agent tools
 
 = 1.2.1 =
 Client agent group caching
+
+= 2.0.0 =
+Complete refactor
+
+= 2.0.2 =
+Added roles/all api

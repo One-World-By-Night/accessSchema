@@ -2,7 +2,7 @@
 /**
  * Plugin Name: accessSchema
  * Description: Manage Role-based access schema plugin with audit logging and REST API support.
- * Version: 2.0.0
+ * Version: 2.0.2
  * Author: greghacke
  * Author URI: https://www.owbn.net
  * Text Domain: accessschema
@@ -32,6 +32,7 @@ $required_files = array(
     'includes/render/render-admin.php',
     'includes/render/render-functions.php',
     'includes/admin/role-manager.php',
+    'includes/admin/settings.php',
     'includes/shortcodes/access.php',
     'includes/utils/access-utils.php'
 );
