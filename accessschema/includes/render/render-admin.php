@@ -1,7 +1,7 @@
 <?php
 /**
  * File: includes/render/render-admin.php
- * * * @version 2.0.2
+ * @version 2.0.3
  * Author: greghacke
  */
 
@@ -266,7 +266,36 @@ function accessSchema_user_profile_update($user_id) {
     }
 }
 
+/**
+ * Display user's assigned roles in profile (read-only)
+ */
+function accessSchema_display_user_roles($user) {
+    // Get assigned roles
+    $roles = accessSchema_get_user_roles($user->ID);
+    
+    if (empty($roles)) {
+        return;
+    }
+    ?>
+    <h2><?php esc_html_e('Access Schema', 'accessschema'); ?></h2>
+    <table class="form-table" role="presentation">
+        <tr>
+            <th><?php esc_html_e('Assigned Roles', 'accessschema'); ?></th>
+            <td>
+                <div class="accessSchema-role-display">
+                    <?php foreach ($roles as $role) : ?>
+                        <div class="accessSchema-role-path"><?php echo esc_html($role); ?></div>
+                    <?php endforeach; ?>
+                </div>
+            </td>
+        </tr>
+    </table>
+    <?php
+}
+
 // Register hooks
+add_action('show_user_profile', 'accessSchema_display_user_roles', 5);
+add_action('edit_user_profile', 'accessSchema_display_user_roles', 5);
 add_action('show_user_profile', 'accessSchema_render_user_role_ui');
 add_action('edit_user_profile', 'accessSchema_render_user_role_ui');
 add_action('personal_options_update', 'accessSchema_user_profile_update');

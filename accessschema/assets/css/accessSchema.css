@@ -1,6 +1,6 @@
 /**
  * File: assets/css/accessSchema.css
- * * * @version 2.0.2
+ * @version 2.0.3
  * @author greghacke
  */
 
@@ -279,4 +279,20 @@
         border: 1px solid #000;
         background: #fff;
     }
+}
+
+/* Read-only Role Display */
+.accessSchema-role-display {
+    max-width: 600px;
+}
+
+.accessSchema-role-path {
+    font-family: monospace;
+    font-size: 13px;
+    padding: 4px 0;
+    color: #2c3338;
+}
+
+.accessSchema-role-path:not(:last-child) {
+    border-bottom: 1px solid #f0f0f1;
 }
