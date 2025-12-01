@@ -62,12 +62,13 @@ Example: If ASC_PREFIX is 'YPP', options would be:
 
 == Developer API ==
 
-Use in plugin code:
+Use in plugin code (where $client_id is your lowercase, hyphen-normalized ASC_PREFIX, e.g., 'ypp'):
 
-accessSchema_client_remote_check_access( 'user@example.com', 'Chronicle/KONY/HST', 'ypp' );  
-accessSchema_client_remote_grant_role( 'user@example.com', 'Coordinator/Tzimisce/Player' );  
-accessSchema_client_remote_get_roles_by_email( 'user@example.com' );  
-accessSchema_access_granted( 'Chronicle/KONY/*' );
+accessSchema_client_remote_check_access( 'user@example.com', 'Chronicle/KONY/HST', $client_id, true );  
+accessSchema_client_remote_grant_role( 'user@example.com', 'Coordinator/Tzimisce/Player', $client_id );  
+accessSchema_client_remote_revoke_role( 'user@example.com', 'Coordinator/Tzimisce/Player', $client_id );  
+accessSchema_client_remote_get_roles_by_email( 'user@example.com', $client_id );  
+accessSchema_access_granted( 'Chronicle/KONY/*' );  // Uses ASC_PREFIX automatically
 
 == Usage Examples ==
 
@@ -112,15 +113,19 @@ Capability mapping (in settings or via update_option):
 
 == Shortcode ==
 
-Use [access_schema_client]...[/access_schema_client] to conditionally show content:
+Use [access_schema_{client_id}]...[/access_schema_{client_id}] to conditionally show content.
 
-[access_schema_client role="Chronicles/ABC/HST"]  
+The shortcode name is dynamic based on your ASC_PREFIX. For example:
+- If ASC_PREFIX is 'YPP', use [access_schema_ypp]
+- If ASC_PREFIX is 'OWBN_BOARD', use [access_schema_owbn-board]
+
+[access_schema_ypp role="Chronicles/ABC/HST"]  
 Welcome, Head Storyteller!  
-[/access_schema_client]
+[/access_schema_ypp]
 
-[access_schema_client any="Chronicles/ABC/HST, Chronicles/ABC/AST" wildcard="true" fallback="You do not have access."]  
+[access_schema_ypp any="Chronicles/ABC/HST, Chronicles/ABC/AST" wildcard="true" fallback="You do not have access."]  
 Only visible to staff.  
-[/access_schema_client]
+[/access_schema_ypp]
 
 == Shortcode Attributes ==
 

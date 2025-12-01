@@ -65,7 +65,7 @@ if (!function_exists('accessSchema_client_remote_user_matches_any')) {
      */
     function accessSchema_client_remote_user_matches_any($email, array $patterns, $client_id)
     {
-        $response = apply_filters('accessschema_get_roles_for_slug', null, $email, $client_id);
+        $response = accessSchema_client_remote_get_roles_by_email($email, $client_id);
 
         if (
             is_wp_error($response) ||
@@ -132,7 +132,7 @@ if (!function_exists('accessSchema_client_roles_match_pattern_from_email')) {
      */
     function accessSchema_client_roles_match_pattern_from_email($email, $pattern, $client_id)
     {
-        $response = apply_filters('accessschema_get_roles_for_slug', null, $email, $client_id);
+        $response = accessSchema_client_remote_get_roles_by_email($email, $client_id);
 
         if (
             is_wp_error($response) ||
