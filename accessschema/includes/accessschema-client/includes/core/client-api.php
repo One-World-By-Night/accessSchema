@@ -9,6 +9,31 @@
 
 defined('ABSPATH') || exit;
 
+if (!function_exists('asc_log')) {
+    /**
+     * Conditional logging based on ASC_DEBUG constant or option.
+     *
+     * @param string $message Log message.
+     * @param string $level   Log level: DEBUG, INFO, WARN, ERROR.
+     */
+    function asc_log($message, $level = 'DEBUG')
+    {
+        $levels = ['DEBUG' => 0, 'INFO' => 1, 'WARN' => 2, 'ERROR' => 3];
+
+        // Check for debug mode via constant or option
+        $debug_enabled = defined('ASC_DEBUG') && ASC_DEBUG;
+        if (!$debug_enabled && defined('ASC_PREFIX')) {
+            $client_id = strtolower(str_replace('_', '-', ASC_PREFIX));
+            $debug_enabled = get_option("{$client_id}_accessschema_debug", false);
+        }
+
+        // Always log ERROR, otherwise only if debug enabled
+        if ($level === 'ERROR' || $debug_enabled) {
+            error_log("[ASC][{$level}] {$message}");
+        }
+    }
+}
+
 if (!function_exists('as_client_option_key')) {
     function as_client_option_key($client_id, $key)
     {
@@ -51,15 +76,16 @@ if (!function_exists('accessSchema_client_remote_post')) {
     {
         // Defensive logging
         if (!is_string($client_id)) {
-            error_log("[AS] FATAL: Non-string slug in accessSchema_client_remote_post: " . print_r($client_id, true));
-
-            // Get trace
-            ob_start();
-            debug_print_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10);
-            $trace = ob_get_clean();
-            error_log("[AS] Stack trace:\n" . $trace);
-
+            asc_log("Non-string slug in accessSchema_client_remote_post: " . print_r($client_id, true), 'ERROR');
             return new WP_Error('invalid_slug', 'Plugin slug must be a string');
+        }
+
+        $url_base = accessSchema_client_get_remote_url($client_id);
+        $key      = accessSchema_client_get_remote_key($client_id);
+
+        if (!$url_base || !$key) {
+            asc_log("Remote URL or API key is not set for slug: {$client_id}", 'ERROR');
+            return new WP_Error('config_error', 'Remote URL or API key is not set for plugin: ' . esc_html($client_id));
         }
 
         $url_base = accessSchema_client_get_remote_url($client_id);
@@ -82,7 +108,7 @@ if (!function_exists('accessSchema_client_remote_post')) {
         ]);
 
         if (is_wp_error($response)) {
-            error_log("[AS] HTTP POST ERROR: " . $response->get_error_message());
+            asc_log("HTTP POST ERROR: " . $response->get_error_message(), 'ERROR');
             return $response;
         }
 
@@ -90,12 +116,12 @@ if (!function_exists('accessSchema_client_remote_post')) {
         $data   = json_decode(wp_remote_retrieve_body($response), true);
 
         if (!is_array($data)) {
-            error_log("[AS] ERROR: Invalid JSON response for slug {$client_id}: " . wp_remote_retrieve_body($response));
+            asc_log("Invalid JSON response for slug {$client_id}", 'ERROR');
             return new WP_Error('api_response_invalid', 'Invalid JSON from API.', ['slug' => $client_id]);
         }
 
         if ($status !== 200 && $status !== 201) {
-            error_log("[AS] ERROR: API returned HTTP $status for slug {$client_id} with body: " . print_r($data, true));
+            asc_log("API returned HTTP {$status} for slug {$client_id}", 'WARN');
             return new WP_Error('api_error', 'Remote API returned HTTP ' . $status, ['slug' => $client_id, 'data' => $data]);
         }
 
@@ -110,7 +136,7 @@ if (!function_exists('accessSchema_client_remote_get_roles_by_email')) {
 
         $user = get_user_by('email', $email);
         if (!$user) {
-            error_log("[OWBN] No user found with email: {$email}");
+            asc_log("No local user found with email: {$email}", 'DEBUG');
         }
 
         $is_remote = accessSchema_is_remote_mode($client_id);
@@ -137,7 +163,7 @@ if (!function_exists('accessSchema_client_remote_get_roles_by_email')) {
             }
         }
 
-        error_log("[OWBN] No cache — requesting remote roles");
+        asc_log("No cache for {$email} — requesting remote roles", 'DEBUG');
 
         $response = accessSchema_client_remote_post($client_id, 'roles', ['email' => sanitize_email($email)]);
 
@@ -153,7 +179,7 @@ if (!function_exists('accessSchema_client_remote_get_roles_by_email')) {
             update_user_meta($user->ID, "{$client_id}_accessschema_cached_roles", $response['roles']);
             update_user_meta($user->ID, "{$client_id}_accessschema_cached_roles_timestamp", time());
         } else {
-            error_log("[OWBN] Failed to retrieve roles remotely or response invalid");
+            asc_log("Failed to retrieve roles remotely for {$email}", 'WARN');
         }
 
         return $response;
@@ -310,46 +336,39 @@ if (!function_exists('asc_hook_user_has_cap_filter')) {
     function asc_hook_user_has_cap_filter($allcaps, $caps, $args, $user)
     {
         $requested_cap = $caps[0] ?? null;
-        if (! $requested_cap || ! $user instanceof WP_User) {
+        if (!$requested_cap || !$user instanceof WP_User) {
             return $allcaps;
         }
 
-        $client_id = defined('ASC_PREFIX') ? ASC_PREFIX : 'accessschema_client';
-        $mode      = get_option("{$client_id}_accessschema_mode", 'remote');
-        $email     = $user->user_email;
+        // Build client_id the same way client-init.php does
+        $client_id = defined('ASC_PREFIX')
+            ? strtolower(str_replace('_', '-', ASC_PREFIX))
+            : 'accessschema-client';
 
-        // Log invocation
-        error_log("ASC CAP FILTER → Requested: {$requested_cap}, Mode: {$mode}, Email: {$email}");
+        $mode  = get_option("{$client_id}_accessschema_mode", 'remote');
+        $email = $user->user_email;
 
         if ($mode === 'none') {
-            error_log("ASC CAP FILTER → Mode 'none', skipping ASC check.");
             return $allcaps;
         }
 
-        if (! is_email($email)) {
-            error_log("ASC CAP FILTER → Invalid email: {$email}");
+        if (!is_email($email)) {
             return $allcaps;
         }
 
-        // ✅ SPECIAL: Group-level check for asc_has_access_to_group
+        // Group-level check for asc_has_access_to_group
         if ($requested_cap === 'asc_has_access_to_group') {
             $group_path = $args[0] ?? null;
-            if (! $group_path) {
-                error_log("ASC CAP FILTER → Missing group path in args.");
+            if (!$group_path) {
                 return $allcaps;
             }
 
-            // Fetch all roles for this user
-            $roles_data = ($mode === 'local')
-                ? accessSchema_client_local_get_roles_by_email($email, $client_id)
-                : accessSchema_client_remote_get_roles_by_email($email, $client_id);
-
+            // Use existing function - it handles both local and remote modes internally
+            $roles_data = accessSchema_client_remote_get_roles_by_email($email, $client_id);
             $roles = $roles_data['roles'] ?? [];
 
             $has_access = in_array($group_path, $roles, true) ||
                 !empty(preg_grep('#^' . preg_quote($group_path, '#') . '/#', $roles));
-
-            error_log("ASC CAP FILTER → Group check for '{$group_path}' => " . ($has_access ? '✅ GRANTED' : '❌ DENIED'));
 
             if ($has_access) {
                 $allcaps[$requested_cap] = true;
@@ -358,34 +377,26 @@ if (!function_exists('asc_hook_user_has_cap_filter')) {
             return $allcaps;
         }
 
-        // ✅ Mapped capability check (optional)
+        // Mapped capability check
         $role_map = get_option("{$client_id}_capability_map", []);
         if (empty($role_map[$requested_cap])) {
-            error_log("ASC CAP FILTER → No role map for {$requested_cap}, skipping.");
             return $allcaps;
         }
 
         foreach ((array) $role_map[$requested_cap] as $raw_path) {
             $role_path = asc_expand_role_path($raw_path);
 
-            error_log("ASC CAP FILTER → Checking {$requested_cap} via path: {$role_path}");
-
-            $granted = ($mode === 'local')
-                ? accessSchema_client_local_check_access($email, $role_path, $client_id)
-                : accessSchema_client_remote_check_access($email, $role_path, $client_id, true);
+            // Use existing function - it handles both local and remote modes internally
+            $granted = accessSchema_client_remote_check_access($email, $role_path, $client_id, true);
 
             if (is_wp_error($granted)) {
-                error_log("ASC CAP FILTER → WP_Error: " . $granted->get_error_message());
                 continue;
             }
 
             if ($granted === true) {
                 $allcaps[$requested_cap] = true;
-                error_log("ASC CAP FILTER → ✅ ACCESS GRANTED for {$requested_cap} via {$role_path}");
                 break;
             }
-
-            error_log("ASC CAP FILTER → ❌ Access denied for {$role_path}");
         }
 
         return $allcaps;
