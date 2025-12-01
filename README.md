@@ -164,7 +164,7 @@ if ( function_exists('accessSchema_client_check_access') ) {
 
 ### Security
 
-- All requests use an `X-API-Key` header with the API key defined in your environment.
+- All requests use an `x-api-key` header with the API key defined in your environment.
 - Ensure HTTPS is used for all traffic.
 - Do not expose or log the API key on the frontend.
 
