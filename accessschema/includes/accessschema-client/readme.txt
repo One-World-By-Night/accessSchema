@@ -43,16 +43,22 @@ to match your plugin.
 
 == Configuration ==
 
-Once initialized, a menu appears under “Users” as "{ASC_PREFIX} ASC" where you can configure:  
+Once initialized, a menu appears under "Users" as "{ASC_PREFIX} ASC" where you can configure:  
 - Connection Mode (remote, local, none)  
 - Remote API URL and key  
 - Capability-to-role mapping for WP core caps
 
-These are stored in options like:  
-- YPP_accessschema_mode  
-- YPP_accessschema_client_url  
-- YPP_accessschema_client_key  
-- YPP_capability_map
+These are stored in options like (where client_id is the lowercase, hyphen-normalized ASC_PREFIX):  
+- {client_id}_accessschema_mode  
+- {client_id}_accessschema_client_url  
+- {client_id}_accessschema_client_key  
+- {client_id}_capability_map
+
+Example: If ASC_PREFIX is 'YPP', options would be:  
+- ypp_accessschema_mode  
+- ypp_accessschema_client_url  
+- ypp_accessschema_client_key  
+- ypp_capability_map
 
 == Developer API ==
 
