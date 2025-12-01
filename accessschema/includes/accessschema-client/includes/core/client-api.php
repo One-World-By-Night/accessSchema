@@ -88,14 +88,6 @@ if (!function_exists('accessSchema_client_remote_post')) {
             return new WP_Error('config_error', 'Remote URL or API key is not set for plugin: ' . esc_html($client_id));
         }
 
-        $url_base = accessSchema_client_get_remote_url($client_id);
-        $key      = accessSchema_client_get_remote_key($client_id);
-
-        if (!$url_base || !$key) {
-            error_log("[AS] ERROR: Remote URL or API key is not set for plugin slug: " . print_r($client_id, true));
-            return new WP_Error('config_error', 'Remote URL or API key is not set for plugin: ' . esc_html($client_id));
-        }
-
         $url = trailingslashit($url_base) . ltrim($endpoint, '/');
 
         $response = wp_remote_post($url, [
@@ -132,15 +124,13 @@ if (!function_exists('accessSchema_client_remote_post')) {
 if (!function_exists('accessSchema_client_remote_get_roles_by_email')) {
     function accessSchema_client_remote_get_roles_by_email($email, $client_id)
     {
-        // error_log("[OWBN] Begin role lookup for {$email} in slug {$client_id}");
-
         $user = get_user_by('email', $email);
+
         if (!$user) {
             asc_log("No local user found with email: {$email}", 'DEBUG');
         }
 
         $is_remote = accessSchema_is_remote_mode($client_id);
-        // error_log("accessSchema_is_remote_mode({$client_id}) = " . ($is_remote ? 'true' : 'false'));
 
         if (!$is_remote) {
             if (!$user) {
@@ -148,7 +138,6 @@ if (!function_exists('accessSchema_client_remote_get_roles_by_email')) {
             }
 
             $response = accessSchema_client_local_post('roles', ['email' => sanitize_email($email)]);
-            // error_log("[OWBN] Local mode response for {$email}: " . print_r($response, true));
             return $response;
         }
 
@@ -156,7 +145,6 @@ if (!function_exists('accessSchema_client_remote_get_roles_by_email')) {
         if ($user) {
             $cache_key = "{$client_id}_accessschema_cached_roles";
             $cached = get_user_meta($user->ID, $cache_key, true);
-            // error_log("[OWBN] Cached roles for {$email} → " . print_r($cached, true));
 
             if (is_array($cached) && !empty($cached)) {
                 return ['roles' => $cached];
@@ -166,8 +154,6 @@ if (!function_exists('accessSchema_client_remote_get_roles_by_email')) {
         asc_log("No cache for {$email} — requesting remote roles", 'DEBUG');
 
         $response = accessSchema_client_remote_post($client_id, 'roles', ['email' => sanitize_email($email)]);
-
-        // error_log("[OWBN] Remote response: " . print_r($response, true));
 
         if (
             !is_wp_error($response) &&
@@ -272,17 +258,14 @@ if (!function_exists('accessSchema_client_remote_check_access')) {
         // Validate and sanitize inputs
         $email = sanitize_email($email);
         if (!is_email($email)) {
-            // error_log("[AS] FATAL: Invalid email provided to check_access: " . print_r($email, true));
             return new WP_Error('invalid_email', 'Invalid email address.');
         }
 
         if (!is_string($role_path) || trim($role_path) === '') {
-            // error_log("[AS] FATAL: Invalid role_path provided to check_access: " . print_r($role_path, true));
             return new WP_Error('invalid_role_path', 'Role path must be a non-empty string.');
         }
 
         if (!is_string($client_id) || trim($client_id) === '') {
-            // error_log("[AS] FATAL: Invalid or missing plugin slug in check_access: " . print_r($client_id, true));
             return new WP_Error('invalid_slug', 'Plugin slug must be a non-empty string.');
         }
 
@@ -309,12 +292,10 @@ if (!function_exists('accessSchema_client_remote_check_access')) {
 
         // Handle error responses
         if (is_wp_error($data)) {
-            // error_log("[AS] ERROR: access check failed for {$email} / {$role_path} in slug {$client_id}: " . $data->get_error_message());
             return $data;
         }
 
         if (!is_array($data) || !array_key_exists('granted', $data)) {
-            // error_log("[AS] ERROR: Malformed response from access check for {$email} / {$role_path}: " . print_r($data, true));
             return new WP_Error('invalid_response', 'Invalid response from access check.');
         }
 
