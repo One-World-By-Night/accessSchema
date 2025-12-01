@@ -23,10 +23,12 @@ add_action('init', function () {
                 'role'     => '',       // Single role path (exact or pattern)
                 'any'      => '',       // Comma-separated list of paths/patterns
                 'wildcard' => 'false',  // true/false for wildcard/glob mode
+                'children' => 'false',  // true/false to include child roles
                 'fallback' => '',       // Optional fallback if user doesn't match
             ], $atts, "access_schema_{$client_id}");
 
             $wildcard = filter_var($atts['wildcard'], FILTER_VALIDATE_BOOLEAN);
+            $children = filter_var($atts['children'], FILTER_VALIDATE_BOOLEAN);
             $email = $user->user_email;
 
             // === Handle 'any' multiple patterns ===
@@ -48,7 +50,7 @@ add_action('init', function () {
                 }
             } else {
                 // Correct parameter order: email, role_path, client_id, include_children
-                $granted = accessSchema_client_remote_check_access($email, $role, $client_id, false);
+                $granted = accessSchema_client_remote_check_access($email, $role, $client_id, $children);
                 if (!is_wp_error($granted) && $granted) {
                     return do_shortcode($content);
                 }
