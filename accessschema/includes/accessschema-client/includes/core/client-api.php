@@ -339,7 +339,8 @@ if (!function_exists('asc_hook_user_has_cap_filter')) {
 
         // Group-level check for asc_has_access_to_group
         if ($requested_cap === 'asc_has_access_to_group') {
-            $group_path = $args[0] ?? null;
+            // $args[0] is the capability, $args[1] is the first extra argument (group path)
+            $group_path = $args[1] ?? null;
             if (!$group_path) {
                 return $allcaps;
             }

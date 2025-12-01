@@ -4,13 +4,12 @@ This file provides utility functions to simplify role-based access checks using 
 
 ---
 
-## 🔒 `accessSchema_access_granted( $user_id, $patterns )`
+## 🔒 `accessSchema_access_granted( $patterns )`
 
-Check if a user has access to any of the provided role patterns.
+Check if the current user has access to any of the provided role patterns.
 
 ### Parameters
 
-- **`$user_id`** (`int`) – The ID of the user to check.
 - **`$patterns`** (`string|array`) – A single pattern string (e.g. `'Chronicles/*/HST'`) or an array of patterns (e.g. `['Coordinators/**/Lead', 'Chronicles/MCKN/CM']`).
 
 ### Returns
@@ -41,13 +40,19 @@ Example:
 ---
 
 ## ✅ Example Usage
-
 ```php
-if ( ! accessSchema_access_granted( get_current_user_id(), [
+if ( ! accessSchema_access_granted( [
     'Chronicles/*/CM',
     'Coordinators/**/Lead'
 ] ) ) {
     return; // Block access
+}
+```
+
+You can also pass a single pattern string:
+```php
+if ( accessSchema_access_granted( 'Chronicles/MCKN/HST' ) ) {
+    echo 'You are an HST!';
 }
 ```
 
