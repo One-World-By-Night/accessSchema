@@ -56,14 +56,6 @@ if ( accessSchema_access_granted( 'Chronicles/MCKN/HST' ) ) {
 }
 ```
 
-You can also pass a single pattern string:
-
-```php
-if ( accessSchema_access_granted( get_current_user_id(), 'Chronicles/MCKN/HST' ) ) {
-    echo 'You are an HST!';
-}
-```
-
 ---
 
 ## 🔄 Extending with Filters
