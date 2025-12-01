@@ -7,7 +7,7 @@
  * Function: Define admin settings page for AccessSchema client
  */
 
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
 /**  Add a custom admin menu page for AccessSchema client settings.
  * This function adds a new page under the Users menu in the WordPress admin dashboard.
@@ -16,15 +16,16 @@ defined( 'ABSPATH' ) || exit;
 add_action('admin_menu', function () {
     if (!defined('ASC_PREFIX') || !defined('ASC_LABEL')) return;
 
-    $client_id  = strtolower(ASC_PREFIX) . '_client';
-    $prefix = strtoupper(preg_replace('/[^A-Z0-9]/i', '', ASC_PREFIX));
-    $label = ASC_LABEL;
+    // Match client_id format from client-init.php
+    $client_id = strtolower(str_replace('_', '-', ASC_PREFIX));
+    $prefix    = strtoupper(preg_replace('/[^A-Z0-9]/i', '', ASC_PREFIX));
+    $label     = ASC_LABEL;
 
     add_users_page(
         $label . ' accessSchema Client Settings',   // Page title
         $prefix . ' ASC',                           // Menu label
         'manage_options',                           // Capability
-        $client_id,                                      // Slug
+        $client_id . '_client',                     // Menu slug (unique)
         'accessSchema_render_admin_page'            // Callback
     );
 });
@@ -34,19 +35,22 @@ add_action('admin_menu', function () {
  * and provides a manual cache clear option for user roles.
  */
 if (!function_exists('accessSchema_render_admin_page')) {
-    function accessSchema_render_admin_page() {
+    function accessSchema_render_admin_page()
+    {
         if (!defined('ASC_PREFIX') || !defined('ASC_LABEL')) return;
 
-        $client_id   = strtolower(ASC_PREFIX) . '_client';        // Group
-        $page   = $client_id . '_settings';                       // Page
-        $label  = ASC_LABEL;
+        // Match client_id format from client-init.php and settings-fields.php
+        $client_id = strtolower(str_replace('_', '-', ASC_PREFIX));
+        $group     = "{$client_id}_client";           // Matches settings-fields.php
+        $page      = "{$client_id}_client_settings";  // Matches settings-fields.php
+        $label     = ASC_LABEL;
 
         echo '<div class="wrap">';
         echo '<h1>' . esc_html($label . ' Client Settings') . '</h1>';
 
         echo '<form method="post" action="options.php">';
-        settings_fields($client_id);      // ← Group name used in register_setting()
-        do_settings_sections($page); // ← Page name used in add_settings_section/field
+        settings_fields($group);         // ← Group name used in register_setting()
+        do_settings_sections($page);     // ← Page name used in add_settings_section/field
         submit_button();
         echo '</form>';
 
