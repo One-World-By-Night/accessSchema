@@ -170,19 +170,3 @@ add_action('admin_init', function () {
         }
     }
 });
-
-// Sanitize callback (must be defined once)
-if (!function_exists('asc_sanitize_capability_map')) {
-    function asc_sanitize_capability_map($input)
-    {
-        $output = [];
-        foreach ($input as $cap => $raw) {
-            $lines = preg_split('/[\r\n]+/', $raw);
-            $sanitized = array_filter(array_map('sanitize_text_field', $lines));
-            if (!empty($sanitized)) {
-                $output[sanitize_key($cap)] = array_values($sanitized);
-            }
-        }
-        return $output;
-    }
-}
