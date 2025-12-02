@@ -1,4 +1,5 @@
 <?php
+
 /**
  * File: includes/admin/settings.php
  * @version 2.0.3
@@ -9,7 +10,8 @@ defined('ABSPATH') || exit;
 
 add_action('admin_menu', 'accessSchema_add_settings_page');
 
-function accessSchema_add_settings_page() {
+function accessSchema_add_settings_page()
+{
     add_options_page(
         __('Access Schema Settings', 'accessschema'),
         __('Access Schema', 'accessschema'),
@@ -19,27 +21,36 @@ function accessSchema_add_settings_page() {
     );
 }
 
-function accessSchema_render_settings_page() {
-    ?>
+function accessSchema_render_settings_page()
+{
+?>
     <div class="wrap">
         <h1><?php esc_html_e('Access Schema Settings', 'accessschema'); ?></h1>
-        
+
         <?php settings_errors('accessschema_settings'); ?>
-        
+
         <form method="post" action="options.php">
             <?php
             settings_fields('accessschema_settings');
             do_settings_sections('accessschema_settings');
             ?>
-            
+
             <h2 class="title"><?php esc_html_e('API Settings', 'accessschema'); ?></h2>
             <table class="form-table">
                 <tr>
+                    <th scope="row"><?php esc_html_e('API URL', 'accessschema'); ?></th>
+                    <td>
+                        <code id="api_url"><?php echo esc_url(rest_url('access-schema/v1/')); ?></code>
+                        <button type="button" class="button" onclick="navigator.clipboard.writeText(document.getElementById('api_url').textContent)"><?php esc_html_e('Copy', 'accessschema'); ?></button>
+                        <p class="description"><?php esc_html_e('Base URL for client connections', 'accessschema'); ?></p>
+                    </td>
+                </tr>
+                <tr>
                     <th scope="row"><?php esc_html_e('Read-Only API Key', 'accessschema'); ?></th>
                     <td>
-                        <input type="text" name="accessSchema_api_key_readonly" id="api_key_ro" 
-                               value="<?php echo esc_attr(get_option('accessSchema_api_key_readonly', '')); ?>" 
-                               class="regular-text code" readonly />
+                        <input type="text" name="accessSchema_api_key_readonly" id="api_key_ro"
+                            value="<?php echo esc_attr(get_option('accessSchema_api_key_readonly', '')); ?>"
+                            class="regular-text code" readonly />
                         <button type="button" class="button" onclick="generateApiKey('api_key_ro')"><?php esc_html_e('Generate New', 'accessschema'); ?></button>
                         <p class="description"><?php esc_html_e('Use this key for read-only API access', 'accessschema'); ?></p>
                     </td>
@@ -47,15 +58,15 @@ function accessSchema_render_settings_page() {
                 <tr>
                     <th scope="row"><?php esc_html_e('Read-Write API Key', 'accessschema'); ?></th>
                     <td>
-                        <input type="text" name="accessSchema_api_key_readwrite" id="api_key_rw" 
-                               value="<?php echo esc_attr(get_option('accessSchema_api_key_readwrite', '')); ?>" 
-                               class="regular-text code" readonly />
+                        <input type="text" name="accessSchema_api_key_readwrite" id="api_key_rw"
+                            value="<?php echo esc_attr(get_option('accessSchema_api_key_readwrite', '')); ?>"
+                            class="regular-text code" readonly />
                         <button type="button" class="button" onclick="generateApiKey('api_key_rw')"><?php esc_html_e('Generate New', 'accessschema'); ?></button>
                         <p class="description"><?php esc_html_e('Use this key for full API access', 'accessschema'); ?></p>
                     </td>
                 </tr>
             </table>
-            
+
             <h2 class="title"><?php esc_html_e('Logging Settings', 'accessschema'); ?></h2>
             <table class="form-table">
                 <tr>
@@ -82,8 +93,8 @@ function accessSchema_render_settings_page() {
                     <th scope="row"><?php esc_html_e('Enable Audit Logging', 'accessschema'); ?></th>
                     <td>
                         <label>
-                            <input type="checkbox" name="accessSchema_enable_audit" value="1" 
-                                   <?php checked(get_option('accessSchema_enable_audit', true)); ?> />
+                            <input type="checkbox" name="accessSchema_enable_audit" value="1"
+                                <?php checked(get_option('accessSchema_enable_audit', true)); ?> />
                             <?php esc_html_e('Log all access checks and role changes', 'accessschema'); ?>
                         </label>
                     </td>
@@ -91,44 +102,44 @@ function accessSchema_render_settings_page() {
                 <tr>
                     <th scope="row"><?php esc_html_e('Audit Log Retention', 'accessschema'); ?></th>
                     <td>
-                        <input type="number" name="accessSchema_audit_retention_days" 
-                               value="<?php echo esc_attr(get_option('accessSchema_audit_retention_days', 90)); ?>" 
-                               min="1" max="365" /> <?php esc_html_e('days', 'accessschema'); ?>
+                        <input type="number" name="accessSchema_audit_retention_days"
+                            value="<?php echo esc_attr(get_option('accessSchema_audit_retention_days', 90)); ?>"
+                            min="1" max="365" /> <?php esc_html_e('days', 'accessschema'); ?>
                         <p class="description"><?php esc_html_e('Automatically delete logs older than this', 'accessschema'); ?></p>
                     </td>
                 </tr>
             </table>
-            
+
             <h2 class="title"><?php esc_html_e('Performance Settings', 'accessschema'); ?></h2>
             <table class="form-table">
                 <tr>
                     <th scope="row"><?php esc_html_e('Cache TTL', 'accessschema'); ?></th>
                     <td>
-                        <input type="number" name="accessSchema_cache_ttl" 
-                               value="<?php echo esc_attr(get_option('accessSchema_cache_ttl', 3600)); ?>" 
-                               min="0" /> <?php esc_html_e('seconds', 'accessschema'); ?>
+                        <input type="number" name="accessSchema_cache_ttl"
+                            value="<?php echo esc_attr(get_option('accessSchema_cache_ttl', 3600)); ?>"
+                            min="0" /> <?php esc_html_e('seconds', 'accessschema'); ?>
                         <p class="description"><?php esc_html_e('How long to cache role data (0 to disable)', 'accessschema'); ?></p>
                     </td>
                 </tr>
                 <tr>
                     <th scope="row"><?php esc_html_e('Maximum Role Depth', 'accessschema'); ?></th>
                     <td>
-                        <input type="number" name="accessSchema_max_depth" 
-                               value="<?php echo esc_attr(get_option('accessSchema_max_depth', 10)); ?>" 
-                               min="1" max="20" />
+                        <input type="number" name="accessSchema_max_depth"
+                            value="<?php echo esc_attr(get_option('accessSchema_max_depth', 10)); ?>"
+                            min="1" max="20" />
                         <p class="description"><?php esc_html_e('Maximum nesting level for roles', 'accessschema'); ?></p>
                     </td>
                 </tr>
             </table>
-            
+
             <h2 class="title"><?php esc_html_e('Advanced Settings', 'accessschema'); ?></h2>
             <table class="form-table">
                 <tr>
                     <th scope="row"><?php esc_html_e('Enable REST API', 'accessschema'); ?></th>
                     <td>
                         <label>
-                            <input type="checkbox" name="accessSchema_enable_rest_api" value="1" 
-                                   <?php checked(get_option('accessSchema_enable_rest_api', true)); ?> />
+                            <input type="checkbox" name="accessSchema_enable_rest_api" value="1"
+                                <?php checked(get_option('accessSchema_enable_rest_api', true)); ?> />
                             <?php esc_html_e('Allow external API access', 'accessschema'); ?>
                         </label>
                     </td>
@@ -137,50 +148,51 @@ function accessSchema_render_settings_page() {
                     <th scope="row"><?php esc_html_e('Remove Data on Uninstall', 'accessschema'); ?></th>
                     <td>
                         <label>
-                            <input type="checkbox" name="accessSchema_remove_data_on_uninstall" value="1" 
-                                   <?php checked(get_option('accessSchema_remove_data_on_uninstall', false)); ?> />
+                            <input type="checkbox" name="accessSchema_remove_data_on_uninstall" value="1"
+                                <?php checked(get_option('accessSchema_remove_data_on_uninstall', false)); ?> />
                             <?php esc_html_e('Delete all plugin data when uninstalling', 'accessschema'); ?>
                         </label>
                         <p class="description"><?php esc_html_e('Warning: This cannot be undone!', 'accessschema'); ?></p>
                     </td>
                 </tr>
             </table>
-            
+
             <?php submit_button(); ?>
         </form>
-        
+
         <hr />
-        
+
         <h2><?php esc_html_e('Maintenance', 'accessschema'); ?></h2>
         <p>
-            <a href="<?php echo esc_url(wp_nonce_url(admin_url('options-general.php?page=accessschema-settings&action=clear_cache'), 'clear_cache')); ?>" 
-               class="button"><?php esc_html_e('Clear All Caches', 'accessschema'); ?></a>
-            <a href="<?php echo esc_url(wp_nonce_url(admin_url('options-general.php?page=accessschema-settings&action=export_settings'), 'export_settings')); ?>" 
-               class="button"><?php esc_html_e('Export Settings', 'accessschema'); ?></a>
+            <a href="<?php echo esc_url(wp_nonce_url(admin_url('options-general.php?page=accessschema-settings&action=clear_cache'), 'clear_cache')); ?>"
+                class="button"><?php esc_html_e('Clear All Caches', 'accessschema'); ?></a>
+            <a href="<?php echo esc_url(wp_nonce_url(admin_url('options-general.php?page=accessschema-settings&action=export_settings'), 'export_settings')); ?>"
+                class="button"><?php esc_html_e('Export Settings', 'accessschema'); ?></a>
         </p>
-        
+
         <?php if (defined('WP_DEBUG') && WP_DEBUG) : ?>
             <hr />
             <h2><?php esc_html_e('Debug Information', 'accessschema'); ?></h2>
             <?php accessSchema_show_debug_info(); ?>
         <?php endif; ?>
     </div>
-    
+
     <script>
-    function generateApiKey(fieldId) {
-        const field = document.getElementById(fieldId);
-        const key = 'as_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-        field.value = key;
-        field.removeAttribute('readonly');
-    }
+        function generateApiKey(fieldId) {
+            const field = document.getElementById(fieldId);
+            const key = 'as_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            field.value = key;
+            field.removeAttribute('readonly');
+        }
     </script>
-    <?php
+<?php
 }
 
 // Register settings
 add_action('admin_init', 'accessSchema_register_settings');
 
-function accessSchema_register_settings() {
+function accessSchema_register_settings()
+{
     $settings = array(
         'accessSchema_api_key_readonly',
         'accessSchema_api_key_readwrite',
@@ -192,13 +204,14 @@ function accessSchema_register_settings() {
         'accessSchema_enable_rest_api',
         'accessSchema_remove_data_on_uninstall'
     );
-    
+
     foreach ($settings as $setting) {
         register_setting('accessschema_settings', $setting, 'accessSchema_sanitize_setting');
     }
 }
 
-function accessSchema_sanitize_setting($value) {
+function accessSchema_sanitize_setting($value)
+{
     if (is_numeric($value)) {
         return absint($value);
     }
@@ -208,23 +221,28 @@ function accessSchema_sanitize_setting($value) {
 // Handle actions
 add_action('admin_init', 'accessSchema_handle_settings_actions');
 
-function accessSchema_handle_settings_actions() {
+function accessSchema_handle_settings_actions()
+{
     if (!isset($_GET['page']) || $_GET['page'] !== 'accessschema-settings') {
         return;
     }
-    
+
     if (isset($_GET['action'])) {
         switch ($_GET['action']) {
             case 'clear_cache':
                 if (wp_verify_nonce($_GET['_wpnonce'] ?? '', 'clear_cache')) {
                     accessSchema_clear_all_caches();
-                    add_settings_error('accessschema_settings', 'cache_cleared', 
-                        __('All caches cleared successfully.', 'accessschema'), 'success');
+                    add_settings_error(
+                        'accessschema_settings',
+                        'cache_cleared',
+                        __('All caches cleared successfully.', 'accessschema'),
+                        'success'
+                    );
                     wp_safe_redirect(admin_url('options-general.php?page=accessschema-settings'));
                     exit;
                 }
                 break;
-                
+
             case 'export_settings':
                 if (wp_verify_nonce($_GET['_wpnonce'] ?? '', 'export_settings')) {
                     accessSchema_export_settings();
@@ -235,7 +253,8 @@ function accessSchema_handle_settings_actions() {
     }
 }
 
-function accessSchema_export_settings() {
+function accessSchema_export_settings()
+{
     $settings = array();
     $option_names = array(
         'accessSchema_log_level',
@@ -245,25 +264,26 @@ function accessSchema_export_settings() {
         'accessSchema_max_depth',
         'accessSchema_enable_rest_api'
     );
-    
+
     foreach ($option_names as $option) {
         $settings[$option] = get_option($option);
     }
-    
+
     header('Content-Type: application/json');
     header('Content-Disposition: attachment; filename="accessschema-settings-' . date('Y-m-d') . '.json"');
     echo wp_json_encode($settings, JSON_PRETTY_PRINT);
 }
 
-function accessSchema_show_debug_info() {
+function accessSchema_show_debug_info()
+{
     global $wpdb;
-    
+
     $cache_stats = accessSchema_get_cache_stats();
     $role_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}accessSchema_roles");
     $user_role_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}accessSchema_user_roles");
     $log_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}accessSchema_audit_log");
-    
-    ?>
+
+?>
     <table class="widefat">
         <tr>
             <th><?php esc_html_e('Total Roles', 'accessschema'); ?></th>
@@ -282,5 +302,5 @@ function accessSchema_show_debug_info() {
             <td><?php echo esc_html($cache_stats['ratio'] . '%'); ?></td>
         </tr>
     </table>
-    <?php
+<?php
 }
