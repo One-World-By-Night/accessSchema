@@ -1,0 +1,84 @@
+<?xml version="1.0"?>
+<ruleset name="AccessSchema">
+	<description>Custom PHPCS ruleset for the AccessSchema server plugin.</description>
+
+	<file>.</file>
+	<exclude-pattern>*/assets/*</exclude-pattern>
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/node_modules/*</exclude-pattern>
+
+	<arg name="extensions" value="php"/>
+	<arg value="sp"/>
+
+	<rule ref="WordPress">
+		<!-- Intentional camelCase function names (accessSchema_ prefix convention) -->
+		<exclude name="WordPress.NamingConventions.ValidFunctionName.FunctionNameInvalid"/>
+
+		<!-- Intentional camelCase hook names (accessSchema_ prefix convention) -->
+		<exclude name="WordPress.NamingConventions.ValidHookName.NotLowercase"/>
+
+		<!-- Direct DB queries are necessary for custom tables not handled by WP APIs -->
+		<exclude name="WordPress.DB.DirectDatabaseQuery.DirectQuery"/>
+		<exclude name="WordPress.DB.DirectDatabaseQuery.NoCaching"/>
+		<exclude name="WordPress.DB.DirectDatabaseQuery.SchemaChange"/>
+
+		<!-- Custom table names built from prefix + string are safe -->
+		<exclude name="WordPress.DB.PreparedSQL.InterpolatedNotPrepared"/>
+		<exclude name="WordPress.DB.PreparedSQL.NotPrepared"/>
+		<exclude name="WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare"/>
+
+		<!-- Plugin file name matches WordPress conventions -->
+		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
+
+		<!-- Block comments used for section headers -->
+		<exclude name="Squiz.Commenting.FileComment.SpacingAfterOpen"/>
+
+		<!-- Inline comment end characters are stylistic -->
+		<exclude name="Squiz.Commenting.InlineComment.InvalidEndChar"/>
+
+		<!-- error_log() is used intentionally for debugging/audit -->
+		<exclude name="WordPress.PHP.DevelopmentFunctions.error_log_error_log"/>
+
+		<!-- serialize() is used for cache key generation -->
+		<exclude name="WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize"/>
+
+		<!-- date() is acceptable in this context -->
+		<exclude name="WordPress.DateTime.RestrictedFunctions.date_date"/>
+
+		<!-- Size function in loop is acceptable for readability -->
+		<exclude name="Squiz.PHP.DisallowSizeFunctionsInLoops.Found"/>
+
+		<!-- Unused parameters are from WordPress hook signatures -->
+		<exclude name="Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed"/>
+		<exclude name="Generic.CodeAnalysis.UnusedFunctionParameter.Found"/>
+
+		<!-- Global variable override is intentional for $wpdb usage patterns -->
+		<exclude name="WordPress.WP.GlobalVariablesOverride.Prohibited"/>
+
+		<!-- fopen/fclose needed for CSV export -->
+		<exclude name="WordPress.WP.AlternativeFunctions.file_system_operations_fopen"/>
+		<exclude name="WordPress.WP.AlternativeFunctions.file_system_operations_fclose"/>
+
+		<!-- Documentation improvements tracked separately -->
+		<exclude name="Squiz.Commenting.FunctionComment.MissingParamTag"/>
+		<exclude name="Squiz.Commenting.FunctionComment.Missing"/>
+		<exclude name="Squiz.Commenting.FunctionComment.WrongStyle"/>
+		<exclude name="Squiz.Commenting.FunctionComment.MissingParamComment"/>
+		<exclude name="Squiz.Commenting.FunctionCommentThrowTag.Missing"/>
+		<exclude name="Squiz.Commenting.FileComment.MissingPackageTag"/>
+
+		<!-- in_array strict param is acceptable when checking string arrays -->
+		<exclude name="WordPress.PHP.StrictInArray.MissingTrueStrict"/>
+	</rule>
+
+	<!-- Register custom capabilities -->
+	<rule ref="WordPress.WP.Capabilities">
+		<properties>
+			<property name="custom_capabilities" type="array">
+				<element value="manage_access_schema"/>
+				<element value="assign_access_roles"/>
+				<element value="view_access_logs"/>
+			</property>
+		</properties>
+	</rule>
+</ruleset>
