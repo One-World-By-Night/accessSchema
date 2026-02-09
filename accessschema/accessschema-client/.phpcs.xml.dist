@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<ruleset name="AccessSchema Client">
+	<description>Custom PHPCS ruleset for the AccessSchema client library.</description>
+
+	<file>.</file>
+	<exclude-pattern>*/assets/*</exclude-pattern>
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+
+	<arg name="extensions" value="php"/>
+	<arg value="sp"/>
+
+	<rule ref="WordPress">
+		<!-- Intentional camelCase function names (accessSchema_ prefix convention) -->
+		<exclude name="WordPress.NamingConventions.ValidFunctionName.FunctionNameInvalid"/>
+
+		<!-- Intentional camelCase hook names (accessSchema_ prefix convention) -->
+		<exclude name="WordPress.NamingConventions.ValidHookName.NotLowercase"/>
+
+		<!-- File naming follows non-standard convention for embeddable client -->
+		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
+
+		<!-- Block comments used for section headers -->
+		<exclude name="Squiz.Commenting.FileComment.SpacingAfterOpen"/>
+
+		<!-- Inline comment end characters are stylistic -->
+		<exclude name="Squiz.Commenting.InlineComment.InvalidEndChar"/>
+
+		<!-- error_log() is used intentionally for debugging -->
+		<exclude name="WordPress.PHP.DevelopmentFunctions.error_log_error_log"/>
+		<exclude name="WordPress.PHP.DevelopmentFunctions.error_log_print_r"/>
+
+		<!-- Unused parameters are from WordPress hook signatures -->
+		<exclude name="Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed"/>
+
+		<!-- Commented-out code is acceptable in template files -->
+		<exclude name="Squiz.PHP.CommentedOutCode.Found"/>
+
+		<!-- Empty file stubs are intentional for module loader pattern -->
+		<exclude name="Internal.NoCodeFound"/>
+
+		<!-- Documentation improvements tracked separately -->
+		<exclude name="Squiz.Commenting.FunctionComment.Missing"/>
+		<exclude name="Squiz.Commenting.FunctionComment.MissingParamTag"/>
+		<exclude name="Squiz.Commenting.FunctionComment.MissingParamComment"/>
+		<exclude name="Squiz.Commenting.FunctionComment.WrongStyle"/>
+		<exclude name="Squiz.Commenting.FileComment.MissingPackageTag"/>
+	</rule>
+</ruleset>
