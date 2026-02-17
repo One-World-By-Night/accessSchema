@@ -4,7 +4,7 @@ Tags: roles, access control, permissions, REST API, audit log
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 2.1.2
+Stable tag: 2.2.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -28,6 +28,13 @@ This plugin enables:
 3. Add `ACCESS_SCHEMA_API_KEY` and `ACCESS_SCHEMA_LOG_LEVEL` to your `wp-config.php`
 
 == Changelog ==
+
+= 2.2.0 =
+* Client: multi-instance safety — all shared hooks guarded against duplicate registration
+* Client: user_has_cap filter moved inside function_exists() guard
+* Client: removed duplicate admin_action_* hooks (consolidated into admin_init)
+* Client: profile and Users page hooks register once via define() guards
+* Client: CSS handle collision fix with wp_style_is() check
 
 = 2.1.2 =
 * Client: added function_exists() guard on accessSchema_client_render_grouped_roles() to prevent fatal on duplicate load
@@ -82,6 +89,9 @@ ASC Roles column and filters on WP Admin Users table. PHP 7.4 compatibility fix.
 
 = 2.1.2 =
 Client bugfix: function_exists() guard to prevent fatal on duplicate load.
+
+= 2.2.0 =
+Client: multi-instance safety for sites running multiple plugins with embedded accessSchema clients.
 
 = 2.1.1 =
 Grouped role display in Users table for better differentiation.

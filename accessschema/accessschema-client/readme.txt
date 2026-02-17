@@ -3,7 +3,7 @@ Contributors: greghacke
 Tags: access control, remote API, roles, permissions  
 Requires at least: 5.0  
 Tested up to: 6.5  
-Stable tag: 2.1.2  
+Stable tag: 2.2.0  
 License: MIT  
 License URI: https://opensource.org/licenses/MIT  
 
@@ -135,6 +135,14 @@ add_filter('accessSchema_access_granted', function($granted, $patterns, $user_id
 }, 10, 3);
 
 == Changelog ==
+
+= 2.2.0 =
+- Multi-instance safety: all shared hooks now register once regardless of how many plugins embed the client
+- Moved user_has_cap filter registration inside function_exists() guard to prevent duplicate execution
+- Removed duplicate admin_action_* hooks (consolidated into admin_init handler in users.php)
+- Guarded profile display hooks with ASC_CLIENT_PROFILE_HOOKS_REGISTERED constant
+- Guarded Users page hooks with ASC_CLIENT_USERS_HOOKS_REGISTERED constant
+- CSS handle collision fix: checks wp_style_is() before re-registering
 
 = 1.2.0 =
 - Switched from slug to client_id everywhere

@@ -20,6 +20,7 @@ $client_id = strtolower( str_replace( '_', '-', ASC_PREFIX ) );         // e.g.,
 $label     = ucwords( strtolower( str_replace( '_', ' ', ASC_PREFIX ) ) ); // e.g., 'OWBNBOARD' => 'Owbnboard'
 
 // === Register ===
+if ( ! function_exists( 'accessSchema_register_client_plugin' ) ) {
 function accessSchema_register_client_plugin( $client_id, $label ) {
 	add_filter(
 		'accessschema_registered_slugs',
@@ -46,6 +47,20 @@ function accessSchema_register_client_plugin( $client_id, $label ) {
 		10,
 		3
 	);
+
+	// Provide role data to utility functions via filter.
+	add_filter(
+		'accessschema_get_roles_for_slug',
+		function ( $result, $email, $filter_slug ) use ( $client_id ) {
+			if ( $client_id !== $filter_slug ) {
+				return $result;
+			}
+			return accessSchema_client_remote_get_roles_by_email( $email, $client_id );
+		},
+		10,
+		3
+	);
+}
 }
 
 accessSchema_register_client_plugin( $client_id, $label );

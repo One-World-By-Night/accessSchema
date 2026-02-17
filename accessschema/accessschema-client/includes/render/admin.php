@@ -25,28 +25,32 @@ if ( ! function_exists( 'accessSchema_client_register_render_admin' ) ) {
 	}
 }
 
-// Register profile display for ALL clients
-add_action(
-	'show_user_profile',
-	function ( $user ) {
-		$registered = apply_filters( 'accessschema_registered_slugs', array() );
-		foreach ( $registered as $client_id => $label ) {
-			accessSchema_render_user_cache_block( $client_id, $label, $user );
-		}
-	},
-	15
-);
+// Register profile display for ALL clients — once only.
+if ( ! defined( 'ASC_CLIENT_PROFILE_HOOKS_REGISTERED' ) ) {
+	define( 'ASC_CLIENT_PROFILE_HOOKS_REGISTERED', true );
 
-add_action(
-	'edit_user_profile',
-	function ( $user ) {
-		$registered = apply_filters( 'accessschema_registered_slugs', array() );
-		foreach ( $registered as $client_id => $label ) {
-			accessSchema_render_user_cache_block( $client_id, $label, $user );
-		}
-	},
-	15
-);
+	add_action(
+		'show_user_profile',
+		function ( $user ) {
+			$registered = apply_filters( 'accessschema_registered_slugs', array() );
+			foreach ( $registered as $client_id => $label ) {
+				accessSchema_render_user_cache_block( $client_id, $label, $user );
+			}
+		},
+		15
+	);
+
+	add_action(
+		'edit_user_profile',
+		function ( $user ) {
+			$registered = apply_filters( 'accessschema_registered_slugs', array() );
+			foreach ( $registered as $client_id => $label ) {
+				accessSchema_render_user_cache_block( $client_id, $label, $user );
+			}
+		},
+		15
+	);
+}
 
 if ( ! function_exists( 'accessSchema_render_slug_settings_form' ) ) {
 	function accessSchema_render_slug_settings_form( $client_id ) {
@@ -158,49 +162,5 @@ if ( ! function_exists( 'accessSchema_render_user_cache_block' ) ) {
 	}
 }
 
-// Admin actions for cache management
-add_action(
-	'admin_action_flush_accessschema_cache',
-	function () {
-		if (
-		! isset( $_GET['user_id'], $_GET['slug'], $_GET['_wpnonce'] ) ||
-		! current_user_can( 'edit_users' ) ||
-		! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'flush_accessschema_' . intval( $_GET['user_id'] ) . '_' . sanitize_key( wp_unslash( $_GET['slug'] ) ) )
-		) {
-			wp_die( 'Unauthorized request.' );
-		}
-
-		$user_id   = intval( wp_unslash( $_GET['user_id'] ) );
-		$client_id = sanitize_key( wp_unslash( $_GET['slug'] ) );
-
-		delete_user_meta( $user_id, "{$client_id}_accessschema_cached_roles" );
-		delete_user_meta( $user_id, "{$client_id}_accessschema_cached_roles_timestamp" );
-
-		wp_safe_redirect( get_edit_user_link( $user_id ) );
-		exit;
-	}
-);
-
-add_action(
-	'admin_action_refresh_accessschema_cache',
-	function () {
-		if (
-		! isset( $_GET['user_id'], $_GET['slug'], $_GET['_wpnonce'] ) ||
-		! current_user_can( 'edit_users' ) ||
-		! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'refresh_accessschema_' . intval( $_GET['user_id'] ) . '_' . sanitize_key( wp_unslash( $_GET['slug'] ) ) )
-		) {
-			wp_die( 'Unauthorized request.' );
-		}
-
-		$user_id   = intval( wp_unslash( $_GET['user_id'] ) );
-		$client_id = sanitize_key( wp_unslash( $_GET['slug'] ) );
-
-		$user = get_user_by( 'ID', $user_id );
-		if ( $user instanceof WP_User ) {
-			accessSchema_refresh_roles_for_user( $user, $client_id );
-		}
-
-		wp_safe_redirect( get_edit_user_link( $user_id ) );
-		exit;
-	}
-);
+// Admin actions for cache management are handled in includes/admin/users.php
+// via admin_init — no duplicate hooks needed here.

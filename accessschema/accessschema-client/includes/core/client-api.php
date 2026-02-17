@@ -25,6 +25,8 @@ if ( ! function_exists( 'accessSchema_is_remote_mode' ) ) {
 if ( ! function_exists( 'accessSchema_client_get_remote_url' ) ) {
 	function accessSchema_client_get_remote_url( $client_id ) {
 		$url = trim( get_option( "{$client_id}_accessschema_client_url" ) );
+		// Strip REST API path if stored in legacy format (pre-2.1.x).
+		$url = preg_replace( '#/wp-json/access-schema/v1/?.*$#', '', $url );
 		return rtrim( $url, '/' );
 	}
 }
@@ -381,7 +383,7 @@ if ( ! function_exists( 'asc_hook_user_has_cap_filter' ) ) {
 			return $allcaps;
 		}
 
-		$client_id = defined( 'ASC_PREFIX' ) ? ASC_PREFIX : 'accessschema_client';
+		$client_id = defined( 'ASC_PREFIX' ) ? strtolower( str_replace( '_', '-', ASC_PREFIX ) ) : 'accessschema_client';
 		$mode      = get_option( "{$client_id}_accessschema_mode", 'remote' );
 		$email     = $user->user_email;
 
@@ -441,6 +443,8 @@ if ( ! function_exists( 'asc_hook_user_has_cap_filter' ) ) {
 
 		return $allcaps;
 	}
+	// Register the filter once — inside the guard so duplicate loads skip it.
+	add_filter( 'user_has_cap', 'asc_hook_user_has_cap_filter', 10, 4 );
 }
 
 if ( ! function_exists( 'asc_expand_role_path' ) ) {
@@ -452,8 +456,6 @@ if ( ! function_exists( 'asc_expand_role_path' ) ) {
 		return str_replace( '$slug', sanitize_key( $slug ), $raw_path );
 	}
 }
-
-add_filter( 'user_has_cap', 'asc_hook_user_has_cap_filter', 10, 4 );
 
 
 if ( ! function_exists( 'accessSchema_client_local_post' ) ) {
