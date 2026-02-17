@@ -2,7 +2,7 @@
 
 /** File: includes/core/client-api.php
  * Text Domain: accessschema-client
- * version 1.2.0
+ * version 2.0.4
  *
  * @author greghacke
  * Function: This file contains the core client API functions for AccessSchema.

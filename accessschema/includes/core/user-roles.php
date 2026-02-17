@@ -2,7 +2,7 @@
 /**
  * File: includes/core/user-roles.php
  *
- * @version 2.0.3
+ * @version 2.0.4
  * Author: greghacke
  */
 

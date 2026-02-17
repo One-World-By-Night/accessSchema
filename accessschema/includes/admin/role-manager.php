@@ -2,7 +2,7 @@
 /**
  * File: includes/admin/role-manager.php
  *
- * @version 2.0.3
+ * @version 2.0.4
  * Author: greghacke
  */
 

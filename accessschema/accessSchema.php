@@ -2,7 +2,7 @@
 /**
  * Plugin Name: accessSchema
  * Description: Manage Role-based access schema plugin with audit logging and REST API support.
- * Version: 2.0.0
+ * Version: 2.0.4
  * Author: greghacke
  * Author URI: https://www.owbn.net
  * Text Domain: accessschema
@@ -17,7 +17,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // Define plugin constants
-define( 'ACCESSSCHEMA_VERSION', '2.0.0' );
+define( 'ACCESSSCHEMA_VERSION', '2.0.4' );
 define( 'ACCESSSCHEMA_PLUGIN_FILE', __FILE__ );
 define( 'ACCESSSCHEMA_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'ACCESSSCHEMA_PLUGIN_URL', plugin_dir_url( __FILE__ ) );

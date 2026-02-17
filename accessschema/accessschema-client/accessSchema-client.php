@@ -4,7 +4,7 @@
  * Text Domain: accessschema-client
  * Plugin URI: https://www.github.com/One-World-By-Night/accessschema-client
  * Description: Leveraging a hosted accessSchema instance, this plugin provides a WordPress client for the accessSchema API.
- * Version: 2.0.0
+ * Version: 2.0.4
  * Author: greghacke
  * Contributors: list, of, contributors, separated, by, commas
  * Author URI: https://www.github.com/One-World-By-Night
@@ -67,7 +67,7 @@ if ( ! defined( $prefix . 'URL' ) ) {
 	define( $prefix . 'URL', plugin_dir_url( __FILE__ ) );
 }
 if ( ! defined( $prefix . 'VERSION' ) ) {
-	define( $prefix . 'VERSION', '2.0.0' );
+	define( $prefix . 'VERSION', '2.0.4' );
 }
 if ( ! defined( $prefix . 'TEXTDOMAIN' ) ) {
 	define( $prefix . 'TEXTDOMAIN', 'accessschema-client' );

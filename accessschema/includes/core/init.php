@@ -2,7 +2,7 @@
 /**
  * File: includes/core/init.php
  *
- * @version 2.0.3
+ * @version 2.0.4
  * Author: greghacke
  */
 

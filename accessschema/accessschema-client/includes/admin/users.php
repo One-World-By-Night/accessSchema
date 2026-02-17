@@ -2,7 +2,7 @@
 
 /** File: includes/admin/users.php
  * Text Domain: accessschema-client
- * version 1.2.0
+ * version 2.0.4
  *
  * @author greghacke
  * Function: Define admin users page for AccessSchema client
@@ -163,12 +163,19 @@ add_action(
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display of admin notice based on query parameter
 		$message = sanitize_text_field( wp_unslash( $_GET['message'] ) );
-		$notice  = match ( $message ) {
-			'accessschema_cache_flushed'   => 'AccessSchema role cache flushed.',
-			'accessschema_cache_refreshed' => 'AccessSchema role cache refreshed.',
-			'accessschema_cache_failed'    => 'Failed to refresh AccessSchema roles. Check plugin hook or API response.',
-			default                        => ''
-		};
+		switch ( $message ) {
+			case 'accessschema_cache_flushed':
+				$notice = 'AccessSchema role cache flushed.';
+				break;
+			case 'accessschema_cache_refreshed':
+				$notice = 'AccessSchema role cache refreshed.';
+				break;
+			case 'accessschema_cache_failed':
+				$notice = 'Failed to refresh AccessSchema roles. Check plugin hook or API response.';
+				break;
+			default:
+				$notice = '';
+		}
 
 		if ( $notice ) {
 			echo '<div class="notice notice-info is-dismissible"><p>' . esc_html( $notice ) . '</p></div>';

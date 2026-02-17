@@ -3,7 +3,7 @@ Contributors: greghacke
 Tags: access control, remote API, roles, permissions  
 Requires at least: 5.0  
 Tested up to: 6.5  
-Stable tag: 1.2.0  
+Stable tag: 2.0.4  
 License: MIT  
 License URI: https://opensource.org/licenses/MIT  
 
@@ -136,12 +136,16 @@ add_filter('accessSchema_access_granted', function($granted, $patterns, $user_id
 
 == Changelog ==
 
-= 1.2.0 =  
-- Switched from slug to client_id everywhere  
-- Added login caching and refresh logic  
-- Added remote + local fallback  
-- Improved error and access logs  
+= 1.2.0 =
+- Switched from slug to client_id everywhere
+- Added login caching and refresh logic
+- Added remote + local fallback
+- Improved error and access logs
 - Clarified shortcode behavior and fallback
+
+= 2.0.4 =
+- PHP 7.4 compliance (replaced match expression with switch)
+- Version sync with server plugin
 
 == License ==
 

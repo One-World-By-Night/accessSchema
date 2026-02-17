@@ -3,7 +3,7 @@
 /**
  * File: includes/core/permission-checks.php
  *
- * @version 2.0.3
+ * @version 2.0.4
  * Author: greghacke
  */
 

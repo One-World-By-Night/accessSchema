@@ -2,7 +2,7 @@
 
 /** File: includes/init.php
  * Text Domain: accessschema-client
- * version 1.2.0
+ * version 2.0.4
  *
  * @author greghacke
  * Function:  Porvide a single entry point to load all plugin components in standard and class-based structure

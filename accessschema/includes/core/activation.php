@@ -2,7 +2,7 @@
 /**
  * File: includes/core/activation.php
  *
- * @version 2.0.3
+ * @version 2.0.4
  * Author: greghacke
  */
 
@@ -16,8 +16,8 @@ function accessSchema_activate() {
 
 	try {
 		// Check minimum requirements
-		if ( version_compare( PHP_VERSION, '7.2', '<' ) ) {
-			throw new Exception( 'accessSchema requires PHP 7.2 or higher' );
+		if ( version_compare( PHP_VERSION, '7.4', '<' ) ) {
+			throw new Exception( 'accessSchema requires PHP 7.4 or higher' );
 		}
 
 		if ( version_compare( $GLOBALS['wp_version'], '5.0', '<' ) ) {
