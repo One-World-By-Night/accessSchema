@@ -1,6 +1,62 @@
 # AccessSchema - Version History
 
-## Version 2.0.0 (Current - February 2026)
+## Version 2.1.1 (Current - February 2026)
+
+**Grouped role display in Users table and client local-mode fixes.**
+
+### Server Improvements
+
+- **Grouped by category** — roles in the ASC Roles column are now grouped under their top-level category (e.g., "Chronicle", "Coordinator") with bold uppercase headers
+- **Color-coded category borders** — each category group gets a distinct left-border color (blue, purple, green, orange, pink) cycling through 5 colors
+- **Sub-path display** — roles show the path below the category (e.g., `wsr/hst` under `CHRONICLE`) with the full path available on hover tooltip
+- **Wider column** — column width increased from 220px to 280px to accommodate grouped layout
+
+### Client Improvements
+
+- **Grouped role display** — client Users table column now shows same grouped-by-category layout with flush/refresh controls
+- **Local mode: column hidden** — client hides its Users table column when in local mode (server column already handles display)
+- **Local mode: refresh fixed** — `accessSchema_refresh_roles_for_user()` now routes through `accessSchema_client_local_post()` in local mode instead of always calling the remote API
+- **Local mode: missing functions added** — implemented `accessSchema_client_local_get_roles_by_email()` and `accessSchema_client_local_check_access()` used by `user_has_cap` filter
+- **Local mode: JSON params fixed** — `accessSchema_client_local_post()` now sets Content-Type and JSON body correctly for server functions that use `get_json_params()`
+- **Graceful fallback** — `accessSchema_client_local_post()` checks `function_exists()` before calling server functions, returns WP_Error if server plugin is not active
+
+### Changed Files
+
+- `accessSchema.php` — version bump to 2.1.1
+- `includes/admin/users-table.php` — rewrote render logic to group roles by first path segment
+- `assets/css/accessSchema.css` — replaced depth-based badge styles with category-grouped layout styles
+- `accessschema-client/accessSchema-client.php` — version bump to 2.1.1
+- `accessschema-client/includes/admin/users.php` — grouped role display, local-mode column suppression, inline CSS
+- `accessschema-client/includes/core/client-api.php` — local-mode refresh, missing functions, JSON param fix
+
+---
+
+## Version 2.1.0 (February 2026)
+
+**Admin Users table integration with ASC role column and filtering.**
+
+### New Features
+- **ASC Roles column** on WP Admin > Users table — displays color-coded badges per user with full path tooltips
+- **Select2-powered role filter** — searchable dropdown of all registered roles, includes "No ASC Roles" option
+- **Wildcard pattern filter** — text input supporting `*` (single segment) and `**` (multi-segment) matching (e.g., `chronicles/*/hst`, `coordinators/**`)
+- **Batch-loaded role data** — single SQL query for the entire users list, no N+1 queries
+- **Query modification** — filters use `pre_user_query` with INNER JOINs and MySQL REGEXP for pattern matching
+
+### Bug Fixes
+- **PHP 7.4 compatibility** — replaced `match` expression in client `users.php` with `switch` statement
+
+### Files Added
+- `includes/admin/users-table.php` — all users table column, filter, and query logic
+
+### Files Modified
+- `accessSchema.php` — version bump to 2.1.0, added `users-table.php` to required files
+- `assets/css/accessSchema.css` — added users table column, badge container, and filter styles
+- `accessschema-client/accessSchema-client.php` — version bump to 2.0.1
+- `accessschema-client/includes/admin/users.php` — PHP 7.4 compatibility fix
+
+---
+
+## Version 2.0.0 (February 2026)
 
 **Production-ready release with complete security hardening, feature completion, and code quality improvements.**
 

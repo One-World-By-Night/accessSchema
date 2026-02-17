@@ -1,4 +1,4 @@
-> **Current Version**: 2.0.0 (Production Release - February 2026)
+> **Current Version**: 2.1.1 (February 2026)
 > **Status**: Production-ready, PHPCS clean, security hardened
 > **Version History**: See [VERSION_HISTORY.md](VERSION_HISTORY.md) for complete changelog.
 
@@ -29,6 +29,7 @@ AccessSchema enables granular permission management through hierarchical role pa
 
 ### Admin Features
 - ✅ **Role Manager**: CRUD interface for managing role hierarchy
+- ✅ **Users Table Integration**: ASC Roles column and wildcard pattern filtering on Users list (v2.1.0)
 - ✅ **Batch Operations**: Import multiple role paths via textarea input
 - ✅ **CSV Export**: Export role structure to CSV format
 - ✅ **Edit Modal**: In-place role editing with AJAX save
@@ -219,6 +220,16 @@ Custom rulesets at `.phpcs.xml.dist` with intentional exclusions:
 ## Changelog
 
 See [VERSION_HISTORY.md](VERSION_HISTORY.md) for detailed version history.
+
+### Version 2.1.1 (February 2026)
+
+- **Grouped role display**: Roles in Users table now grouped by top-level category (Chronicle, Coordinator) with color-coded borders
+- **Client: grouped display**: Client Users table column now shows same grouped-by-category layout
+- **Client: local mode fixes**: Column hidden when local, refresh routes through local post, missing functions added, JSON params fixed
+
+### Version 2.1.0 (February 2026)
+- **Users table integration**: ASC Roles column with color-coded badges, Select2 role filter, wildcard pattern matching
+- **PHP 7.4 fix**: Replaced `match` expression in client with `switch` for compatibility
 
 ### Version 2.0.0 (February 2026)
 - **Security hardening**: Server-side API key generation, PHPCS clean

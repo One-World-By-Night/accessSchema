@@ -1,6 +1,6 @@
 /**
  * File: assets/css/accessSchema.css
- * @version 2.0.3
+ * @version 2.1.1
  * @author greghacke
  */
 
@@ -295,4 +295,75 @@
 
 .accessSchema-role-path:not(:last-child) {
     border-bottom: 1px solid #f0f0f1;
+}
+
+/* Users Table — ASC Roles Column */
+.column-accessschema_asc_roles {
+    width: 280px;
+}
+
+.accessSchema-role-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Role group — one per top-level category */
+.accessSchema-role-group {
+    border-left: 3px solid #c3c4c7;
+    padding-left: 6px;
+}
+
+.accessSchema-role-category {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    line-height: 1.6;
+}
+
+.accessSchema-role-path-item {
+    display: block;
+    font-family: monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 0 0 0 4px;
+    color: #50575e;
+    cursor: default;
+}
+
+/* Category colors — rotate through 5 */
+.accessSchema-cat-0 { border-left-color: #1565c0; }
+.accessSchema-cat-0 .accessSchema-role-category { color: #1565c0; }
+
+.accessSchema-cat-1 { border-left-color: #6a1b9a; }
+.accessSchema-cat-1 .accessSchema-role-category { color: #6a1b9a; }
+
+.accessSchema-cat-2 { border-left-color: #2e7d32; }
+.accessSchema-cat-2 .accessSchema-role-category { color: #2e7d32; }
+
+.accessSchema-cat-3 { border-left-color: #e65100; }
+.accessSchema-cat-3 .accessSchema-role-category { color: #e65100; }
+
+.accessSchema-cat-4 { border-left-color: #c2185b; }
+.accessSchema-cat-4 .accessSchema-role-category { color: #c2185b; }
+
+.accessSchema-no-roles {
+    color: #646970;
+    font-style: italic;
+    font-size: 12px;
+}
+
+/* Users Table — Filter Input */
+.accessSchema-pattern-input {
+    width: 250px;
+    margin-left: 4px;
+    vertical-align: middle;
+}
+
+/* Select2 single-select override for users filter */
+#asc_role + .select2-container {
+    vertical-align: middle;
+    margin-right: 4px;
 }

@@ -272,13 +272,29 @@ if ( ! function_exists( 'accessSchema_client_get_all_roles' ) ) {
 }
 
 if ( ! function_exists( 'accessSchema_refresh_roles_for_user' ) ) {
+	/**
+	 * Refresh cached roles for a user from the AccessSchema server.
+	 *
+	 * Supports both remote (REST API) and local (direct function call) modes.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param WP_User $user      The WordPress user object.
+	 * @param string  $client_id The client instance identifier.
+	 * @return array|WP_Error The roles response array, or WP_Error on failure.
+	 */
 	function accessSchema_refresh_roles_for_user( $user, $client_id ) {
 		if ( ! ( $user instanceof WP_User ) ) {
 			return new WP_Error( 'invalid_user', 'User object is invalid.' );
 		}
 
-		$email    = $user->user_email;
-		$response = accessSchema_client_remote_get_roles_by_email( $email, $client_id );
+		$email = $user->user_email;
+
+		if ( accessSchema_is_remote_mode( $client_id ) ) {
+			$response = accessSchema_client_remote_get_roles_by_email( $email, $client_id );
+		} else {
+			$response = accessSchema_client_local_post( 'roles', array( 'email' => $email ) );
+		}
 
 		if (
 			! is_wp_error( $response ) &&
@@ -441,10 +457,19 @@ add_filter( 'user_has_cap', 'asc_hook_user_has_cap_filter', 10, 4 );
 
 
 if ( ! function_exists( 'accessSchema_client_local_post' ) ) {
+	/**
+	 * Call a server API function directly in local mode.
+	 *
+	 * Bypasses REST API transport by calling the server callback function
+	 * with a WP_REST_Request containing the body as JSON params.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string $endpoint The API endpoint name (roles, grant, revoke, check).
+	 * @param array  $body     The request body parameters.
+	 * @return array|WP_Error The response data array, or WP_Error on failure.
+	 */
 	function accessSchema_client_local_post( $endpoint, array $body ) {
-		$request = new WP_REST_Request( 'POST', '/access-schema/v1/' . ltrim( $endpoint, '/' ) );
-		$request->set_body_params( $body );
-
 		$function_map = array(
 			'roles'  => 'accessSchema_api_get_roles',
 			'grant'  => 'accessSchema_api_grant_role',
@@ -456,8 +481,63 @@ if ( ! function_exists( 'accessSchema_client_local_post' ) ) {
 			return new WP_Error( 'invalid_local_endpoint', 'Unrecognized local endpoint.' );
 		}
 
+		if ( ! function_exists( $function_map[ $endpoint ] ) ) {
+			return new WP_Error( 'missing_server_function', 'AccessSchema server plugin is not active.' );
+		}
+
+		$request = new WP_REST_Request( 'POST', '/access-schema/v1/' . ltrim( $endpoint, '/' ) );
+		// Set as JSON body so server functions can use get_json_params().
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body( wp_json_encode( $body ) );
+
 		$response = call_user_func( $function_map[ $endpoint ], $request );
 		return ( $response instanceof WP_Error ) ? $response : $response->get_data();
+	}
+}
+
+if ( ! function_exists( 'accessSchema_client_local_get_roles_by_email' ) ) {
+	/**
+	 * Get user roles via local server function call.
+	 *
+	 * @since 2.1.1
+	 *
+	 * @param string $email     The user email address.
+	 * @param string $client_id The client instance identifier.
+	 * @return array The response with 'roles' key, or empty array on failure.
+	 */
+	function accessSchema_client_local_get_roles_by_email( $email, $client_id ) {
+		$result = accessSchema_client_local_post( 'roles', array( 'email' => $email ) );
+		if ( is_wp_error( $result ) ) {
+			return array( 'roles' => array() );
+		}
+		return $result;
+	}
+}
+
+if ( ! function_exists( 'accessSchema_client_local_check_access' ) ) {
+	/**
+	 * Check user access to a role path via local server function call.
+	 *
+	 * @since 2.1.1
+	 *
+	 * @param string $email     The user email address.
+	 * @param string $role_path The role path to check.
+	 * @param string $client_id The client instance identifier.
+	 * @return bool Whether the user has access.
+	 */
+	function accessSchema_client_local_check_access( $email, $role_path, $client_id ) {
+		$result = accessSchema_client_local_post(
+			'check',
+			array(
+				'email'            => $email,
+				'role_path'        => $role_path,
+				'include_children' => true,
+			)
+		);
+		if ( is_wp_error( $result ) ) {
+			return false;
+		}
+		return ! empty( $result['has_access'] );
 	}
 }
 
