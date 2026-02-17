@@ -3,7 +3,7 @@ Contributors: greghacke
 Tags: access control, remote API, roles, permissions  
 Requires at least: 5.0  
 Tested up to: 6.5  
-Stable tag: 2.0.4  
+Stable tag: 2.1.2  
 License: MIT  
 License URI: https://opensource.org/licenses/MIT  
 
@@ -142,6 +142,9 @@ add_filter('accessSchema_access_granted', function($granted, $patterns, $user_id
 - Added remote + local fallback
 - Improved error and access logs
 - Clarified shortcode behavior and fallback
+
+= 2.1.2 =
+- Added function_exists() guard on accessSchema_client_render_grouped_roles() to prevent fatal on duplicate load
 
 = 2.0.4 =
 - PHP 7.4 compliance (replaced match expression with switch)

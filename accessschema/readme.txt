@@ -4,7 +4,7 @@ Tags: roles, access control, permissions, REST API, audit log
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 2.1.1
+Stable tag: 2.1.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -28,6 +28,9 @@ This plugin enables:
 3. Add `ACCESS_SCHEMA_API_KEY` and `ACCESS_SCHEMA_LOG_LEVEL` to your `wp-config.php`
 
 == Changelog ==
+
+= 2.1.2 =
+* Client: added function_exists() guard on accessSchema_client_render_grouped_roles() to prevent fatal on duplicate load
 
 = 2.1.1 =
 * Grouped role display — roles now grouped by top-level category (Chronicle, Coordinator) with color-coded borders
@@ -76,6 +79,9 @@ PHP 7.4 compliance, version sync across server and client
 
 = 2.1.0 =
 ASC Roles column and filters on WP Admin Users table. PHP 7.4 compatibility fix.
+
+= 2.1.2 =
+Client bugfix: function_exists() guard to prevent fatal on duplicate load.
 
 = 2.1.1 =
 Grouped role display in Users table for better differentiation.

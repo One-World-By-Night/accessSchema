@@ -123,52 +123,54 @@ add_filter(
  * @param string[] $roles Array of full role path strings.
  * @return string HTML output of grouped roles.
  */
-function accessSchema_client_render_grouped_roles( $roles ) {
-	// Group roles by first path segment.
-	$grouped = array();
-	foreach ( $roles as $role_path ) {
-		$parts    = explode( '/', $role_path );
-		$category = $parts[0];
+if ( ! function_exists( 'accessSchema_client_render_grouped_roles' ) ) {
+	function accessSchema_client_render_grouped_roles( $roles ) {
+		// Group roles by first path segment.
+		$grouped = array();
+		foreach ( $roles as $role_path ) {
+			$parts    = explode( '/', $role_path );
+			$category = $parts[0];
 
-		if ( count( $parts ) > 1 ) {
-			$remainder = implode( '/', array_slice( $parts, 1 ) );
-		} else {
-			$remainder = '';
-		}
-
-		if ( ! isset( $grouped[ $category ] ) ) {
-			$grouped[ $category ] = array();
-		}
-		$grouped[ $category ][] = array(
-			'full_path' => $role_path,
-			'display'   => $remainder,
-		);
-	}
-
-	// Category border colors (rotate through 5).
-	$colors = array( '#1565c0', '#6a1b9a', '#2e7d32', '#e65100', '#c2185b' );
-
-	$html      = '<div class="asc-client-role-list">';
-	$cat_index = 0;
-	foreach ( $grouped as $category => $cat_roles ) {
-		$color = $colors[ $cat_index % 5 ];
-
-		$html .= '<div class="asc-client-role-group" style="border-left:3px solid ' . esc_attr( $color ) . ';padding-left:6px;margin-bottom:3px;">';
-		$html .= '<span class="asc-client-role-category" style="color:' . esc_attr( $color ) . ';">' . esc_html( $category ) . '</span>';
-
-		foreach ( $cat_roles as $role ) {
-			if ( '' === $role['display'] ) {
-				continue;
+			if ( count( $parts ) > 1 ) {
+				$remainder = implode( '/', array_slice( $parts, 1 ) );
+			} else {
+				$remainder = '';
 			}
-			$html .= '<span class="asc-client-role-item" title="' . esc_attr( $role['full_path'] ) . '">' . esc_html( $role['display'] ) . '</span>';
+
+			if ( ! isset( $grouped[ $category ] ) ) {
+				$grouped[ $category ] = array();
+			}
+			$grouped[ $category ][] = array(
+				'full_path' => $role_path,
+				'display'   => $remainder,
+			);
 		}
 
-		$html .= '</div>';
-		++$cat_index;
-	}
-	$html .= '</div>';
+		// Category border colors (rotate through 5).
+		$colors = array( '#1565c0', '#6a1b9a', '#2e7d32', '#e65100', '#c2185b' );
 
-	return $html;
+		$html      = '<div class="asc-client-role-list">';
+		$cat_index = 0;
+		foreach ( $grouped as $category => $cat_roles ) {
+			$color = $colors[ $cat_index % 5 ];
+
+			$html .= '<div class="asc-client-role-group" style="border-left:3px solid ' . esc_attr( $color ) . ';padding-left:6px;margin-bottom:3px;">';
+			$html .= '<span class="asc-client-role-category" style="color:' . esc_attr( $color ) . ';">' . esc_html( $category ) . '</span>';
+
+			foreach ( $cat_roles as $role ) {
+				if ( '' === $role['display'] ) {
+					continue;
+				}
+				$html .= '<span class="asc-client-role-item" title="' . esc_attr( $role['full_path'] ) . '">' . esc_html( $role['display'] ) . '</span>';
+			}
+
+			$html .= '</div>';
+			++$cat_index;
+		}
+		$html .= '</div>';
+
+		return $html;
+	}
 }
 
 /**
