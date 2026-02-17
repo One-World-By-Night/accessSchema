@@ -1,0 +1,171 @@
+/**
+ * AccessSchema Roles field styles.
+ *
+ * @package GF_ASC_User_Registration
+ * @since   1.0.0
+ */
+
+/* Select2 wrapper */
+.gf-asc-roles-wrap {
+	margin-bottom: 8px;
+}
+
+.gf-asc-roles-wrap .select2-container {
+	width: 100% !important;
+	min-width: 300px;
+}
+
+.gf-asc-roles-wrap .select2-container--default .select2-selection--multiple {
+	min-height: 38px;
+	border-color: #8c8f94;
+	border-radius: 4px;
+}
+
+.gf-asc-roles-wrap .select2-container--default .select2-selection--multiple .select2-selection__choice {
+	background-color: #2271b1;
+	color: #fff;
+	border: none;
+	border-radius: 3px;
+	padding: 2px 8px;
+	margin: 3px 4px 3px 0;
+	font-size: 12px;
+}
+
+.gf-asc-roles-wrap .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+	color: rgba(255, 255, 255, 0.7);
+	margin-right: 4px;
+}
+
+.gf-asc-roles-wrap .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+	color: #fff;
+}
+
+/* Grouped role display (read-only view) */
+.gf-asc-role-list {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+}
+
+.gf-asc-role-group {
+	margin-bottom: 3px;
+}
+
+.gf-asc-role-category {
+	display: block;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.3px;
+	line-height: 1.6;
+}
+
+.gf-asc-role-item {
+	display: block;
+	font-family: monospace;
+	font-size: 12px;
+	line-height: 1.4;
+	padding: 0 0 0 4px;
+	color: #50575e;
+	cursor: default;
+}
+
+/* Dropdown results styling */
+.select2-results__option--asc-role {
+	font-family: monospace;
+	font-size: 13px;
+}
+
+/* ----------------------------------------------------------------
+   Create Account panel: Select2 overrides
+   ---------------------------------------------------------------- */
+#gf-asc-create-account .select2-container {
+	width: 100% !important;
+}
+
+#gf-asc-create-account .select2-container--default .select2-selection--multiple {
+	min-height: 38px;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
+	background: #fff;
+	padding: 4px 6px;
+}
+
+/* Selected role tags — override Select2 4.1 defaults */
+#gf-asc-create-account .select2-container--default .select2-selection--multiple .select2-selection__choice {
+	background-color: #2271b1 !important;
+	color: #fff !important;
+	border: none !important;
+	border-radius: 3px !important;
+	padding: 4px 8px 4px 24px !important;
+	margin: 3px 4px 3px 0 !important;
+	font-size: 13px !important;
+	line-height: 1.3 !important;
+	position: relative;
+	box-shadow: none !important;
+	outline: none !important;
+}
+
+/* Text inside the tag */
+#gf-asc-create-account .select2-container--default .select2-selection--multiple .select2-selection__choice__display {
+	color: #fff !important;
+	padding: 0 !important;
+	cursor: default;
+}
+
+/* Remove button (x) — Select2 4.1 uses <button> */
+#gf-asc-create-account .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+	color: #fff !important;
+	background: transparent !important;
+	background-color: transparent !important;
+	border: none !important;
+	border-right: none !important;
+	box-shadow: none !important;
+	outline: none !important;
+	font-size: 16px !important;
+	font-weight: 400 !important;
+	line-height: 1;
+	padding: 0 4px !important;
+	margin: 0 !important;
+	position: absolute !important;
+	left: 2px !important;
+	top: 50% !important;
+	transform: translateY(-50%);
+	opacity: 0.7;
+	cursor: pointer;
+	border-radius: 0 !important;
+	width: auto !important;
+	height: auto !important;
+}
+
+#gf-asc-create-account .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover,
+#gf-asc-create-account .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:focus {
+	color: #fff !important;
+	background: transparent !important;
+	background-color: transparent !important;
+	border: none !important;
+	box-shadow: none !important;
+	outline: none !important;
+	opacity: 1;
+}
+
+#gf-asc-create-account .select2-container--default .select2-search--inline .select2-search__field {
+	font-size: 13px;
+	margin-top: 4px;
+	padding: 2px 4px;
+}
+
+/* Dropdown positioning and styling */
+.select2-container--open .select2-dropdown {
+	z-index: 100100;
+	border-color: #8c8f94;
+}
+
+.select2-container--open .select2-results__option {
+	font-size: 13px;
+	padding: 8px 12px;
+}
+
+.select2-container--open .select2-results__option--highlighted[aria-selected] {
+	background-color: #2271b1;
+}
