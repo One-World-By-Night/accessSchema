@@ -69,8 +69,8 @@ add_filter(
 		$output   = '<div class="asc-client-role-column">';
 
 		foreach ( $registered as $client_id => $label ) {
-			$cache_key     = "{$client_id}_accessschema_cached_roles";
-			$timestamp_key = "{$client_id}_accessschema_cached_roles_timestamp";
+			$cache_key     = 'accessschema_cached_roles';
+			$timestamp_key = 'accessschema_cached_roles_timestamp';
 
 			$roles     = get_user_meta( $user_id, $cache_key, true );
 			$timestamp = get_user_meta( $user_id, $timestamp_key, true );
@@ -202,8 +202,8 @@ add_action(
 				return;
 			}
 
-			$cache_key     = "{$client_id}_accessschema_cached_roles";
-			$timestamp_key = "{$client_id}_accessschema_cached_roles_timestamp";
+			$cache_key     = 'accessschema_cached_roles';
+			$timestamp_key = 'accessschema_cached_roles_timestamp';
 
 			if ( 'flush_accessschema_cache' === $action ) {
 				check_admin_referer( "flush_accessschema_{$user_id}_{$client_id}" );

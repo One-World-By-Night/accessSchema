@@ -1,25 +1,34 @@
 <?php
 
-/** File: includes/init.php
+/** File: includes/core/client-init.php
  * Text Domain: accessschema-client
- * version 2.0.4
+ * version 2.4.0
  *
  * @author greghacke
- * Function:  Porvide a single entry point to load all plugin components in standard and class-based structure
+ * Function: Register this client instance and set up per-instance hooks.
  */
 
 defined( 'ABSPATH' ) || exit;
 
-if ( ! defined( 'ASC_PREFIX' ) ) {
-	error_log( '[AS] ERROR: ASC_PREFIX not defined.' );
-	return;
+// Use instance variables inherited from accessSchema-client.php.
+// Fall back to constants for backward compatibility with old-style prefix.php.
+if ( ! isset( $asc_instance_prefix ) || empty( $asc_instance_prefix ) ) {
+	if ( defined( 'ASC_PREFIX' ) ) {
+		$asc_instance_prefix = ASC_PREFIX;
+	} else {
+		error_log( '[AS] ERROR: $asc_instance_prefix not set and ASC_PREFIX not defined.' );
+		return;
+	}
+}
+if ( ! isset( $asc_instance_label ) || empty( $asc_instance_label ) ) {
+	$asc_instance_label = defined( 'ASC_LABEL' ) ? ASC_LABEL : $asc_instance_prefix;
 }
 
-// === Build Slug and Label ===
-$client_id = strtolower( str_replace( '_', '-', ASC_PREFIX ) );         // e.g., 'OWBNBOARD' => 'owbnboard'
-$label     = ucwords( strtolower( str_replace( '_', ' ', ASC_PREFIX ) ) ); // e.g., 'OWBNBOARD' => 'Owbnboard'
+// === Build client ID and label ===
+$client_id = strtolower( str_replace( '_', '-', $asc_instance_prefix ) );
+$label     = ucwords( strtolower( str_replace( '_', ' ', $asc_instance_prefix ) ) );
 
-// === Register ===
+// === Register this instance ===
 if ( ! function_exists( 'accessSchema_register_client_plugin' ) ) {
 function accessSchema_register_client_plugin( $client_id, $label ) {
 	add_filter(

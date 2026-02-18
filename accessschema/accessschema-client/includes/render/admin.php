@@ -68,8 +68,8 @@ if ( ! function_exists( 'accessSchema_render_slug_cache_clear' ) ) {
 			return;
 		}
 
-		$key_roles = "{$client_id}_accessschema_cached_roles";
-		$key_time  = "{$client_id}_accessschema_cached_roles_timestamp";
+		$key_roles = 'accessschema_cached_roles';
+		$key_time  = 'accessschema_cached_roles_timestamp';
 
 		echo '<hr>';
 		echo '<h2>Manual Role Cache Clear</h2>';
@@ -104,8 +104,8 @@ if ( ! function_exists( 'accessSchema_render_user_cache_block' ) ) {
 			return;
 		}
 
-		$roles_key = "{$client_id}_accessschema_cached_roles";
-		$time_key  = "{$client_id}_accessschema_cached_roles_timestamp";
+		$roles_key = 'accessschema_cached_roles';
+		$time_key  = 'accessschema_cached_roles_timestamp';
 
 		$roles        = get_user_meta( $user->ID, $roles_key, true );
 		$timestamp    = get_user_meta( $user->ID, $time_key, true );

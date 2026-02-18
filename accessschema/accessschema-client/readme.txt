@@ -3,7 +3,7 @@ Contributors: greghacke
 Tags: access control, remote API, roles, permissions  
 Requires at least: 5.0  
 Tested up to: 6.5  
-Stable tag: 2.2.0  
+Stable tag: 2.4.0  
 License: MIT  
 License URI: https://opensource.org/licenses/MIT  
 
@@ -36,10 +36,10 @@ In your plugin’s main file:
 
 require_once plugin_dir_path(__FILE__) . 'includes/accessschema-client/accessschema-client.php';
 
-Edit the prefix.php file and replace:  
-define('ASC_PREFIX', 'YPP');  
-define('ASC_LABEL', 'Your Plugin Label');  
-to match your plugin.
+Edit the prefix.php file and set:
+$asc_instance_prefix = 'YPP';
+$asc_instance_label  = 'Your Plugin Label';
+to match your plugin. (Uses variables, not constants, so multiple plugins can each embed their own client.)
 
 == Configuration ==
 
@@ -135,6 +135,21 @@ add_filter('accessSchema_access_granted', function($granted, $patterns, $user_id
 }, 10, 3);
 
 == Changelog ==
+
+= 2.4.0 =
+- Shared cache key: all embedded client instances now read/write the same user meta key (accessschema_cached_roles)
+- Eliminates stale-cache problem when multiple plugins embed the client — any plugin's refresh populates for all
+- Login cache hook now breaks after first successful refresh (shared key means one refresh is enough)
+- No change to per-instance settings (URL, API key, mode) — those remain prefixed
+
+= 2.3.0 =
+- Full variable-based refactor for true multi-instance support
+- prefix.php now sets $asc_instance_prefix / $asc_instance_label variables (not constants)
+- Each embedded client plugin loads its own prefix.php independently
+- ASC_PREFIX / ASC_LABEL constants retained for backward compatibility (first plugin wins)
+- Admin settings page iterates all registered slugs instead of reading ASC_PREFIX
+- user_has_cap filter iterates all registered client instances; if any grants access, capability is allowed
+- Early return on first match in user_has_cap for performance
 
 = 2.2.0 =
 - Multi-instance safety: all shared hooks now register once regardless of how many plugins embed the client

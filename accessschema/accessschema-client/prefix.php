@@ -2,14 +2,18 @@
 
 /** File: prefix.php
  * Text Domain: accessschema-client
- * version 2.0.4
+ * version 2.4.0
  *
  * @author greghacke
- * Function:
+ * Function: Instance-specific configuration for this embedded accessSchema client.
+ *
+ * Each plugin that embeds the client sets its own prefix and label here.
+ * Uses variables (not constants) so multiple plugins can each have their own values.
  */
 
 defined( 'ABSPATH' ) || exit;
 
-// Unique constant prefix for this embedded instance of accessSchema-client
-define( 'ASC_PREFIX', 'WPVP' );       // Change 'YPP' to your plugin's unique prefix
-define( 'ASC_LABEL', 'WPVP' );        // Change 'Your Plugin Label' to your plugin's label
+// Unique prefix for this embedded instance of accessSchema-client.
+// Change these to match your plugin.
+$asc_instance_prefix = 'WPVP';
+$asc_instance_label  = 'WPVP';

@@ -2,7 +2,7 @@
 
 /** File: includes/hooks/cache.php
  * Text Domain: accessschema-client
- * version 2.0.4
+ * version 2.4.0
  *
  * @author greghacke
  * Function: Cache user roles on login
@@ -23,12 +23,16 @@ add_action(
 			return;
 		}
 
+		// Use the first available registered client to refresh roles.
+		// All clients share the same AccessSchema server, so roles are
+		// stored under a shared (non-prefixed) cache key.
 		foreach ( $registered_slugs as $client_id => $label ) {
 			$result = apply_filters( 'accessschema_client_refresh_roles', null, $user, $client_id );
 
 			if ( is_array( $result ) && isset( $result['roles'] ) ) {
-				update_user_meta( $user->ID, "{$client_id}_accessschema_cached_roles", $result['roles'] );
-				update_user_meta( $user->ID, "{$client_id}_accessschema_cached_roles_timestamp", time() );
+				update_user_meta( $user->ID, 'accessschema_cached_roles', $result['roles'] );
+				update_user_meta( $user->ID, 'accessschema_cached_roles_timestamp', time() );
+				break; // Shared cache — one successful refresh is enough.
 			}
 		}
 	},

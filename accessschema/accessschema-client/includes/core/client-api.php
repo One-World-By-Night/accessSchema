@@ -2,7 +2,7 @@
 
 /** File: includes/core/client-api.php
  * Text Domain: accessschema-client
- * version 2.0.4
+ * version 2.4.0
  *
  * @author greghacke
  * Function: This file contains the core client API functions for AccessSchema.
@@ -173,7 +173,7 @@ if ( ! function_exists( 'accessSchema_client_remote_get_roles_by_email' ) ) {
 
 		// Check cache first.
 		if ( $user ) {
-			$cache_key = "{$client_id}_accessschema_cached_roles";
+			$cache_key = 'accessschema_cached_roles';
 			$cached    = get_user_meta( $user->ID, $cache_key, true );
 
 			if ( is_array( $cached ) && ! empty( $cached ) ) {
@@ -192,8 +192,8 @@ if ( ! function_exists( 'accessSchema_client_remote_get_roles_by_email' ) ) {
 			is_array( $response['roles'] ) &&
 			$user
 		) {
-			update_user_meta( $user->ID, "{$client_id}_accessschema_cached_roles", $response['roles'] );
-			update_user_meta( $user->ID, "{$client_id}_accessschema_cached_roles_timestamp", time() );
+			update_user_meta( $user->ID, 'accessschema_cached_roles', $response['roles'] );
+			update_user_meta( $user->ID, 'accessschema_cached_roles_timestamp', time() );
 		} elseif ( is_wp_error( $response ) ) {
 			error_log( '[AccessSchema Client] Failed to retrieve roles remotely: ' . $response->get_error_message() );
 		}
@@ -216,8 +216,8 @@ if ( ! function_exists( 'accessSchema_client_remote_grant_role' ) ) {
 			: accessSchema_client_local_post( 'grant', $payload );
 
 		if ( $user ) {
-			delete_user_meta( $user->ID, "{$client_id}_accessschema_cached_roles" );
-			delete_user_meta( $user->ID, "{$client_id}_accessschema_cached_roles_timestamp" );
+			delete_user_meta( $user->ID, 'accessschema_cached_roles' );
+			delete_user_meta( $user->ID, 'accessschema_cached_roles_timestamp' );
 		}
 
 		return $result;
@@ -238,8 +238,8 @@ if ( ! function_exists( 'accessSchema_client_remote_revoke_role' ) ) {
 			: accessSchema_client_local_post( 'revoke', $payload );
 
 		if ( $user ) {
-			delete_user_meta( $user->ID, "{$client_id}_accessschema_cached_roles" );
-			delete_user_meta( $user->ID, "{$client_id}_accessschema_cached_roles_timestamp" );
+			delete_user_meta( $user->ID, 'accessschema_cached_roles' );
+			delete_user_meta( $user->ID, 'accessschema_cached_roles_timestamp' );
 		}
 
 		return $result;
@@ -303,8 +303,8 @@ if ( ! function_exists( 'accessSchema_refresh_roles_for_user' ) ) {
 			isset( $response['roles'] ) &&
 			is_array( $response['roles'] )
 		) {
-			update_user_meta( $user->ID, "{$client_id}_accessschema_cached_roles", $response['roles'] );
-			update_user_meta( $user->ID, "{$client_id}_accessschema_cached_roles_timestamp", time() );
+			update_user_meta( $user->ID, 'accessschema_cached_roles', $response['roles'] );
+			update_user_meta( $user->ID, 'accessschema_cached_roles_timestamp', time() );
 			return $response;
 		}
 
@@ -371,6 +371,9 @@ if ( ! function_exists( 'asc_hook_user_has_cap_filter' ) ) {
 	/**
 	 * Map WordPress capabilities to AccessSchema roles, or allow group-level access.
 	 *
+	 * Iterates ALL registered client instances so that capabilities granted
+	 * by any instance are honoured — no reliance on the ASC_PREFIX constant.
+	 *
 	 * @param array    $allcaps All capabilities for the user.
 	 * @param string[] $caps    Requested capabilities.
 	 * @param array    $args    [0] => requested cap, [1] => object_id (optional), etc.
@@ -383,61 +386,66 @@ if ( ! function_exists( 'asc_hook_user_has_cap_filter' ) ) {
 			return $allcaps;
 		}
 
-		$client_id = defined( 'ASC_PREFIX' ) ? strtolower( str_replace( '_', '-', ASC_PREFIX ) ) : 'accessschema_client';
-		$mode      = get_option( "{$client_id}_accessschema_mode", 'remote' );
-		$email     = $user->user_email;
-
-		if ( 'none' === $mode ) {
-			return $allcaps;
-		}
-
+		$email = $user->user_email;
 		if ( ! is_email( $email ) ) {
 			return $allcaps;
 		}
 
-		// Group-level check for asc_has_access_to_group.
-		if ( 'asc_has_access_to_group' === $requested_cap ) {
-			$group_path = $args[0] ?? null;
-			if ( ! $group_path ) {
-				return $allcaps;
-			}
-
-			$roles_data = ( 'local' === $mode )
-				? accessSchema_client_local_get_roles_by_email( $email, $client_id )
-				: accessSchema_client_remote_get_roles_by_email( $email, $client_id );
-
-			$roles = $roles_data['roles'] ?? array();
-
-			$has_access = in_array( $group_path, $roles, true ) ||
-							! empty( preg_grep( '#^' . preg_quote( $group_path, '#' ) . '/#', $roles ) );
-
-			if ( $has_access ) {
-				$allcaps[ $requested_cap ] = true;
-			}
-
+		$registered = apply_filters( 'accessschema_registered_slugs', array() );
+		if ( empty( $registered ) ) {
 			return $allcaps;
 		}
 
-		// Mapped capability check.
-		$role_map = get_option( "{$client_id}_capability_map", array() );
-		if ( empty( $role_map[ $requested_cap ] ) ) {
-			return $allcaps;
-		}
-
-		foreach ( (array) $role_map[ $requested_cap ] as $raw_path ) {
-			$role_path = asc_expand_role_path( $raw_path );
-
-			$granted = ( 'local' === $mode )
-				? accessSchema_client_local_check_access( $email, $role_path, $client_id )
-				: accessSchema_client_remote_check_access( $email, $role_path, $client_id, true );
-
-			if ( is_wp_error( $granted ) ) {
+		foreach ( $registered as $client_id => $label ) {
+			$mode = get_option( "{$client_id}_accessschema_mode", 'remote' );
+			if ( 'none' === $mode ) {
 				continue;
 			}
 
-			if ( true === $granted ) {
-				$allcaps[ $requested_cap ] = true;
-				break;
+			// Group-level check for asc_has_access_to_group.
+			if ( 'asc_has_access_to_group' === $requested_cap ) {
+				$group_path = $args[0] ?? null;
+				if ( ! $group_path ) {
+					continue;
+				}
+
+				$roles_data = ( 'local' === $mode )
+					? accessSchema_client_local_get_roles_by_email( $email, $client_id )
+					: accessSchema_client_remote_get_roles_by_email( $email, $client_id );
+
+				$roles = $roles_data['roles'] ?? array();
+
+				$has_access = in_array( $group_path, $roles, true ) ||
+								! empty( preg_grep( '#^' . preg_quote( $group_path, '#' ) . '/#', $roles ) );
+
+				if ( $has_access ) {
+					$allcaps[ $requested_cap ] = true;
+					return $allcaps;
+				}
+				continue;
+			}
+
+			// Mapped capability check.
+			$role_map = get_option( "{$client_id}_capability_map", array() );
+			if ( empty( $role_map[ $requested_cap ] ) ) {
+				continue;
+			}
+
+			foreach ( (array) $role_map[ $requested_cap ] as $raw_path ) {
+				$role_path = asc_expand_role_path( $raw_path );
+
+				$granted = ( 'local' === $mode )
+					? accessSchema_client_local_check_access( $email, $role_path, $client_id )
+					: accessSchema_client_remote_check_access( $email, $role_path, $client_id, true );
+
+				if ( is_wp_error( $granted ) ) {
+					continue;
+				}
+
+				if ( true === $granted ) {
+					$allcaps[ $requested_cap ] = true;
+					return $allcaps;
+				}
 			}
 		}
 
