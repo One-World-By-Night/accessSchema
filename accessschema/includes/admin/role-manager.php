@@ -36,10 +36,11 @@ function accessSchema_render_role_manager_page() {
 				<tr>
 					<th><label for="full_paths"><?php esc_html_e( 'Full Role Path(s)', 'accessschema' ); ?></label></th>
 					<td>
-						<textarea name="full_paths" id="full_paths" rows="6" style="width: 100%;" placeholder="Example: Coordinators/Brujah/Subcoordinator"></textarea>
+						<textarea name="full_paths" id="full_paths" rows="6" style="width: 100%;" placeholder="Example: coordinator/brujah/subcoordinator, chronicle/mckn/cm (note: lower case, no plurals)"></textarea>
 						<p class="description">
 							<?php esc_html_e( 'Enter one full role path per line using / between each level.', 'accessschema' ); ?><br>
-							<?php esc_html_e( 'Example:', 'accessschema' ); ?> <code>Chronicles/KONY/HST</code>
+							<?php esc_html_e( 'Example:', 'accessschema' ); ?> <code>coordinator/brujah/subcoordinator</code>, <code>chronicle/mckn/cm</code>
+							<br><strong><?php esc_html_e( 'Note: use lower case, no plurals.', 'accessschema' ); ?></strong>
 						</p>
 					</td>
 				</tr>

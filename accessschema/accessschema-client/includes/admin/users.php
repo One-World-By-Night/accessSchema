@@ -52,6 +52,9 @@ add_filter(
 
 /**
  * Populate the AccessSchema Roles column with grouped role display.
+ *
+ * All clients share a single cache key, so roles are rendered once.
+ * The first registered remote client is used for Flush/Refresh actions.
  */
 add_filter(
 	'manage_users_custom_column',
@@ -65,56 +68,65 @@ add_filter(
 			return '[No AccessSchema Instances Registered]';
 		}
 
-		$base_url = admin_url( 'users.php' );
-		$output   = '<div class="asc-client-role-column">';
-
-		foreach ( $registered as $client_id => $label ) {
-			$cache_key     = 'accessschema_cached_roles';
-			$timestamp_key = 'accessschema_cached_roles_timestamp';
-
-			$roles     = get_user_meta( $user_id, $cache_key, true );
-			$timestamp = get_user_meta( $user_id, $timestamp_key, true );
-
-			$flush_url = wp_nonce_url(
-				add_query_arg(
-					array(
-						'action'  => 'flush_accessschema_cache',
-						'user_id' => $user_id,
-						'slug'    => $client_id,
-					),
-					$base_url
-				),
-				"flush_accessschema_{$user_id}_{$client_id}"
-			);
-
-			$refresh_url = wp_nonce_url(
-				add_query_arg(
-					array(
-						'action'  => 'refresh_accessschema_cache',
-						'user_id' => $user_id,
-						'slug'    => $client_id,
-					),
-					$base_url
-				),
-				"refresh_accessschema_{$user_id}_{$client_id}"
-			);
-
-			if ( ! is_array( $roles ) || empty( $roles ) ) {
-				$output .= '<span class="asc-client-no-roles">[None]</span> ';
-				$output .= '<a href="' . esc_url( $refresh_url ) . '">[Request]</a>';
-			} else {
-				$output .= accessSchema_client_render_grouped_roles( $roles );
-
-				$time_display = $timestamp
-					? date_i18n( 'm/d/Y h:i a', intval( $timestamp ) )
-					: '[Unknown]';
-
-				$output .= '<div class="asc-client-cache-info">';
-				$output .= '<span class="asc-client-timestamp">' . esc_html( $time_display ) . '</span> ';
-				$output .= '<a href="' . esc_url( $flush_url ) . '">[Flush]</a> ';
-				$output .= '<a href="' . esc_url( $refresh_url ) . '">[Refresh]</a>';
-				$output .= '</div>';
+		// Pick the first registered remote client for action URLs.
+		$action_client = null;
+		foreach ( $registered as $cid => $lbl ) {
+			if ( accessSchema_is_remote_mode( $cid ) ) {
+				$action_client = $cid;
+				break;
 			}
+		}
+		if ( ! $action_client ) {
+			$action_client = array_key_first( $registered );
+		}
+
+		// Shared cache — read once.
+		$roles     = get_user_meta( $user_id, 'accessschema_cached_roles', true );
+		$timestamp = get_user_meta( $user_id, 'accessschema_cached_roles_timestamp', true );
+
+		$base_url = admin_url( 'users.php' );
+
+		$flush_url = wp_nonce_url(
+			add_query_arg(
+				array(
+					'action'  => 'flush_accessschema_cache',
+					'user_id' => $user_id,
+					'slug'    => $action_client,
+				),
+				$base_url
+			),
+			"flush_accessschema_{$user_id}_{$action_client}"
+		);
+
+		$refresh_url = wp_nonce_url(
+			add_query_arg(
+				array(
+					'action'  => 'refresh_accessschema_cache',
+					'user_id' => $user_id,
+					'slug'    => $action_client,
+				),
+				$base_url
+			),
+			"refresh_accessschema_{$user_id}_{$action_client}"
+		);
+
+		$output = '<div class="asc-client-role-column">';
+
+		if ( ! is_array( $roles ) || empty( $roles ) ) {
+			$output .= '<span class="asc-client-no-roles">[None]</span> ';
+			$output .= '<a href="' . esc_url( $refresh_url ) . '">[Request]</a>';
+		} else {
+			$output .= accessSchema_client_render_grouped_roles( $roles );
+
+			$time_display = $timestamp
+				? date_i18n( 'm/d/Y h:i a', intval( $timestamp ) )
+				: '[Unknown]';
+
+			$output .= '<div class="asc-client-cache-info">';
+			$output .= '<span class="asc-client-timestamp">' . esc_html( $time_display ) . '</span> ';
+			$output .= '<a href="' . esc_url( $flush_url ) . '">[Flush]</a> ';
+			$output .= '<a href="' . esc_url( $refresh_url ) . '">[Refresh]</a>';
+			$output .= '</div>';
 		}
 
 		$output .= '</div>';

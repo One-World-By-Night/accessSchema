@@ -4,7 +4,7 @@ Tags: roles, access control, permissions, REST API, audit log
 Requires at least: 6.0  
 Tested up to: 6.8  
 Requires PHP: 7.4  
-Stable tag: 1.0.1 
+Stable tag: 2.2.0
 License: GPLv2 or later  
 License URI: http://www.gnu.org/licenses/gpl-2.0.html  
 
@@ -19,7 +19,7 @@ The `accessSchema` plugin provides a centralized framework for defining and enfo
 ### Core Features
 
 - **Hierarchical Role System**
-  - Register and manage roles like `Chronicles/MCKN/HST`, supporting any depth
+  - Register and manage roles like `chronicle/mckn/hst`, supporting any depth
   - Dynamic parent-child registration ensures clean nesting without duplicates
 
 - **Dynamic Role Registration**
@@ -54,10 +54,10 @@ The `accessSchema` plugin provides a centralized framework for defining and enfo
 
 The plugin provides several shortcodes to embed or utilize role data in the frontend or other plugin logic:
 
-- `[accessSchema-role-exists path="Chronicles/MCKN/HST"]`  
+- `[accessSchema-role-exists path="chronicle/mckn/hst"]`
   Returns `true` or `false`
 
-- `[accessSchema-role-table filter="Chronicles"]`  
+- `[accessSchema-role-table filter="chronicle"]`
   Displays a filterable role table
 
 ---
@@ -109,8 +109,8 @@ Register one or more role paths on the remote AccessSchema server.
 
 <pre>
 $paths = [
-    ['Chronicles', 'KONY', 'HST'],
-    ['Chronicles', 'BETA', 'CM'],
+    ['chronicle', 'kony', 'hst'],
+    ['chronicle', 'beta', 'cm'],
 ];
 $response = accessSchema_client_register_paths($paths);
 </pre>
@@ -120,8 +120,8 @@ $response = accessSchema_client_register_paths($paths);
 Grant a specific role to a user.
 
 <pre>
-accessSchema_client_grant_role(42, 'Chronicles/KONY/CM');
-accessSchema_client_grant_role('user@example.com', 'Chronicles/BETA/HST');
+accessSchema_client_grant_role(42, 'chronicle/kony/cm');
+accessSchema_client_grant_role('user@example.com', 'chronicle/beta/hst');
 </pre>
 
 #### `accessSchema_client_revoke_role(int|string $user, string $role_path): bool`
@@ -129,7 +129,7 @@ accessSchema_client_grant_role('user@example.com', 'Chronicles/BETA/HST');
 Revoke a previously granted role.
 
 <pre>
-accessSchema_client_revoke_role(42, 'Chronicles/KONY/HST');
+accessSchema_client_revoke_role(42, 'chronicle/kony/hst');
 </pre>
 
 #### `accessSchema_client_get_roles(int|string $user): array`
@@ -145,7 +145,7 @@ $roles = accessSchema_client_get_roles('user@example.com');
 Check if a user has access to a given role path. If `$include_children` is true, child roles are matched as well.
 
 <pre>
-if ( accessSchema_client_check_access(42, 'Chronicles/KONY', true) ) {
+if ( accessSchema_client_check_access(42, 'chronicle/kony', true) ) {
     echo 'Access granted.';
 } else {
     echo 'Access denied.';
@@ -156,7 +156,7 @@ if ( accessSchema_client_check_access(42, 'Chronicles/KONY', true) ) {
 
 <pre>
 if ( function_exists('accessSchema_client_check_access') ) {
-    if ( accessSchema_client_check_access(get_current_user_id(), 'Coordinators/Brujah/Subcoordinator') ) {
+    if ( accessSchema_client_check_access(get_current_user_id(), 'coordinator/brujah/subcoordinator') ) {
         echo '<p>You may configure clan-level access here.</p>';
     }
 }
@@ -185,7 +185,20 @@ define('ACCESS_SCHEMA_LOG_LEVEL', 'INFO'); // DEBUG | INFO | WARN | ERROR
 
 ---
 
-##   Changelog  
+## Changelog
+
+### 2.2.0
+- Role Manager UI updated with lowercase/no-plural convention guidance
+- AccessSchema Client v2.4.0: fixed duplicate role display when multiple client plugins register on the same site
+- Client users column now renders shared cached roles once instead of per-client
+- Shared cache key architecture for all client instances
+
+### 2.1.0
+- REST API improvements and role tree management enhancements
+- Audit log filtering and export improvements
+
+### 1.0.1
+- Client agent tools
 
 ### 1.0.0
 - Initial release with:
@@ -197,10 +210,10 @@ define('ACCESS_SCHEMA_LOG_LEVEL', 'INFO'); // DEBUG | INFO | WARN | ERROR
 
 ---
 
-##   Upgrade Notice  
+## Upgrade Notice
+
+### 2.2.0
+Role path conventions enforced: use lowercase, no plurals (e.g., `chronicle/mckn/hst`, not `Chronicles/MCKN/HST`). Role Manager UI updated with guidance. Client duplicate display bug fixed.
 
 ### 1.0.0
 Initial beta for accessSchema with full support for registration, validation, and REST-based integration.
-
-### 1.0.1
-Client agent tools
