@@ -462,7 +462,41 @@ function accessSchema_api_register_roles( $request ) {
  */
 function accessSchema_api_get_roles( $request ) {
 	$params = $request->get_json_params();
-	$user   = accessSchema_resolve_user( $params );
+
+	// Reverse lookup: role_path → users who hold that role.
+	if ( ! empty( $params['role_path'] ) && empty( $params['email'] ) && empty( $params['id'] ) ) {
+		$role_path = sanitize_text_field( $params['role_path'] );
+		$cache_key = 'api_role_users_' . md5( $role_path );
+		$cached    = wp_cache_get( $cache_key, 'accessSchema' );
+
+		if ( false !== $cached ) {
+			return rest_ensure_response( $cached );
+		}
+
+		$wp_users = accessSchema_get_users_by_role( $role_path );
+		$users    = array();
+		foreach ( $wp_users as $u ) {
+			$pid     = get_user_meta( $u->ID, 'player_id', true );
+			$users[] = array(
+				'user_id'      => $u->ID,
+				'display_name' => $u->display_name,
+				'email'        => $u->user_email,
+				'user_login'   => $u->user_login,
+				'player_id'    => $pid ? (string) $pid : '',
+			);
+		}
+
+		$response = array(
+			'role_path' => $role_path,
+			'users'     => $users,
+		);
+
+		wp_cache_set( $cache_key, $response, 'accessSchema', 300 );
+
+		return rest_ensure_response( $response );
+	}
+
+	$user = accessSchema_resolve_user( $params );
 
 	if ( ! $user ) {
 		return new WP_Error( 'user_not_found', 'User not found by id or email.', array( 'status' => 404 ) );
@@ -478,9 +512,13 @@ function accessSchema_api_get_roles( $request ) {
 
 	$roles = accessSchema_get_user_roles( $user->ID );
 
+	// Include player_id so client sites can sync it locally.
+	$pid = get_user_meta( $user->ID, 'player_id', true );
+
 	$response = array(
-		'email' => $user->user_email,
-		'roles' => is_array( $roles ) ? $roles : array(),
+		'email'     => $user->user_email,
+		'roles'     => is_array( $roles ) ? $roles : array(),
+		'player_id' => $pid ? (string) $pid : '',
 	);
 
 	wp_cache_set( $cache_key, $response, 'accessSchema', 300 );
