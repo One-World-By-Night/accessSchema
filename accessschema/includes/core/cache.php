@@ -1,10 +1,4 @@
 <?php
-/**
- * File: includes/core/cache.php
- *
- * @version 2.0.4
- * Author: greghacke
- */
 
 defined( 'ABSPATH' ) || exit;
 
@@ -14,7 +8,6 @@ defined( 'ABSPATH' ) || exit;
  * Registers the global cache group and sets up cache invalidation hooks
  * that fire when roles are added, removed, created, or deleted.
  *
- * @since 1.0.0
  *
  * @return void
  */
@@ -32,7 +25,6 @@ function accessSchema_init_cache() {
 	/**
 	 * Fires after a new role node has been created in the role tree.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @param int $role_id The ID of the newly created role.
 	 */
@@ -41,7 +33,6 @@ function accessSchema_init_cache() {
 	/**
 	 * Fires after a role node has been deleted from the role tree.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @param int $role_id The ID of the deleted role.
 	 */

@@ -1,10 +1,4 @@
 <?php
-/**
- * File: includes/core/role-tree.php
- *
- * @version 2.0.4
- * Author: greghacke
- */
 
 defined( 'ABSPATH' ) || exit;
 
@@ -15,7 +9,6 @@ defined( 'ABSPATH' ) || exit;
  * transaction to ensure all roles are registered atomically. Clears the role
  * tree cache upon success.
  *
- * @since 1.0.0
  *
  * @param string   $group The top-level group name (e.g., 'organization').
  * @param string   $sub   The subkey name under the group (e.g., 'council').
@@ -66,7 +59,6 @@ function accessSchema_register_roles( $group, $sub, $roles ) {
  * database. Uses a static cache to minimize queries for repeated parent lookups.
  * Clears the role tree cache upon successful registration.
  *
- * @since 1.0.0
  *
  * @param string[] $segments An ordered array of path segment names (e.g., ['org', 'council', 'admin']).
  * @return int|false The ID of the final (deepest) node on success, or false on failure.
@@ -168,7 +160,6 @@ function accessSchema_register_path( array $segments ) {
  * a new node with the computed full path and depth. Enforces the maximum
  * tree depth defined by the `accessSchema_max_depth` option.
  *
- * @since 1.0.0
  *
  * @param string   $name      The display name for the role node.
  * @param int|null $parent_id Optional. The parent node ID. Default null (root level).
@@ -261,7 +252,6 @@ function accessSchema_get_or_create_role_node( $name, $parent_id = null ) {
  * Performs a direct full_path lookup first, then falls back to segment-by-segment
  * validation for legacy support. Results are cached in the object cache.
  *
- * @since 1.0.0
  *
  * @param string $role_path The full role path to check (e.g., 'org/council/admin').
  * @return bool True if the role path exists and is active, false otherwise.
@@ -341,7 +331,6 @@ function accessSchema_role_exists( $role_path ) {
  * Recursively builds a nested array of role nodes starting from the given
  * parent ID. Results are cached in the object cache for 5 minutes.
  *
- * @since 1.0.0
  *
  * @param int|null $parent_id Optional. The parent node ID to start from. Default null (root).
  * @param int|null $max_depth Optional. Maximum depth to retrieve. Default null (uses option value).
@@ -402,7 +391,6 @@ function accessSchema_get_role_tree( $parent_id = null, $max_depth = null ) {
  * descendants, including their user assignments. When false, performs a soft
  * delete by marking the role as inactive. Uses a database transaction.
  *
- * @since 1.0.0
  *
  * @param int  $role_id         The ID of the role to delete.
  * @param bool $delete_children Optional. Whether to also delete child roles. Default false.
@@ -468,7 +456,6 @@ function accessSchema_delete_role( $role_id, $delete_children = false ) {
  * Performs a breadth-first traversal of the role tree to collect all
  * descendant role IDs.
  *
- * @since 1.0.0
  *
  * @param int $role_id The parent role ID to find descendants for.
  * @return int[] An array of descendant role IDs.

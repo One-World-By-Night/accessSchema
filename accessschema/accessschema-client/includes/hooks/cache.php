@@ -1,13 +1,5 @@
 <?php
 
-/** File: includes/hooks/cache.php
- * Text Domain: accessschema-client
- * version 2.4.0
- *
- * @author greghacke
- * Function: Cache user roles on login
- */
-
 defined( 'ABSPATH' ) || exit;
 
 add_action(

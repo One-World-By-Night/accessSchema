@@ -1,13 +1,5 @@
 <?php
 
-/** File: includes/admin/settings.php
- * Text Domain: accessschema-client
- * version 2.3.0
- *
- * @author greghacke
- * Function: Define admin settings pages for AccessSchema client (per-instance)
- */
-
 defined( 'ABSPATH' ) || exit;
 
 /**

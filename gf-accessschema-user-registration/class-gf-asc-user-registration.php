@@ -2,8 +2,6 @@
 /**
  * Gravity Forms AccessSchema User Registration Feed Add-On.
  *
- * @package GF_ASC_User_Registration
- * @since   1.0.0
  */
 
 defined( 'ABSPATH' ) || die();
@@ -13,7 +11,6 @@ GFForms::include_feed_addon_framework();
 /**
  * Feed Add-On for creating WordPress users with AccessSchema role assignment.
  *
- * @since 1.0.0
  *
  * @see GFFeedAddOn
  */
@@ -99,7 +96,6 @@ class GF_ASC_User_Registration extends GFFeedAddOn {
 	/**
 	 * Get singleton instance.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @return GF_ASC_User_Registration
 	 */
@@ -113,7 +109,6 @@ class GF_ASC_User_Registration extends GFFeedAddOn {
 	/**
 	 * Initialize the add-on.
 	 *
-	 * @since 1.0.0
 	 */
 	public function init() {
 		parent::init();
@@ -131,7 +126,6 @@ class GF_ASC_User_Registration extends GFFeedAddOn {
 	/**
 	 * Return the plugin's icon for the plugin/form settings menu.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @return string
 	 */
@@ -146,7 +140,6 @@ class GF_ASC_User_Registration extends GFFeedAddOn {
 	/**
 	 * Enqueue scripts for the add-on.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @return array
 	 */
@@ -183,7 +176,6 @@ class GF_ASC_User_Registration extends GFFeedAddOn {
 	/**
 	 * Enqueue styles for the add-on.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @return array
 	 */
@@ -213,7 +205,6 @@ class GF_ASC_User_Registration extends GFFeedAddOn {
 	/**
 	 * Determine if assets should be enqueued on the current page.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @return bool
 	 */
@@ -248,7 +239,6 @@ class GF_ASC_User_Registration extends GFFeedAddOn {
 	/**
 	 * Define the fields for configuring a feed.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @return array
 	 */
@@ -424,7 +414,6 @@ class GF_ASC_User_Registration extends GFFeedAddOn {
 	/**
 	 * Define the feed list columns.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @return array
 	 */
@@ -437,7 +426,6 @@ class GF_ASC_User_Registration extends GFFeedAddOn {
 	/**
 	 * Get WordPress roles formatted as choices for a select field.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @return array
 	 */
@@ -466,7 +454,6 @@ class GF_ASC_User_Registration extends GFFeedAddOn {
 	/**
 	 * Process the feed: create a WordPress user and assign AccessSchema roles.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @param array $feed  The feed configuration.
 	 * @param array $entry The current entry.
@@ -591,7 +578,6 @@ class GF_ASC_User_Registration extends GFFeedAddOn {
 	/**
 	 * Assign AccessSchema roles from the form entry.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @param int   $user_id The new WordPress user ID.
 	 * @param array $feed    The feed configuration.
@@ -663,7 +649,6 @@ class GF_ASC_User_Registration extends GFFeedAddOn {
 	/**
 	 * AJAX handler for searching AccessSchema roles (Select2 compatible).
 	 *
-	 * @since 1.0.0
 	 */
 	public function ajax_search_roles() {
 		check_ajax_referer( 'gf_asc_search_roles', 'nonce' );
@@ -740,7 +725,6 @@ class GF_ASC_User_Registration extends GFFeedAddOn {
 	 * Includes inline admin inputs for username, player ID, and role
 	 * selection so the admin does not need to edit the GF entry directly.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @param array $form  The current form.
 	 * @param array $entry The current entry.
@@ -1050,7 +1034,6 @@ class GF_ASC_User_Registration extends GFFeedAddOn {
 	 * Accepts admin-decision values directly from the meta box POST data,
 	 * saves them to the entry, and then runs the feed.
 	 *
-	 * @since 1.0.0
 	 */
 	public function ajax_process_entry() {
 

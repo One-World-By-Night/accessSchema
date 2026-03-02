@@ -1,10 +1,4 @@
 <?php
-/**
- * File: includes/core/logging.php
- *
- * @version 2.0.4
- * Author: greghacke
- */
 
 defined( 'ABSPATH' ) || exit;
 
@@ -14,7 +8,6 @@ defined( 'ABSPATH' ) || exit;
  * Retrieves the log level from the database option and allows it to be
  * filtered. The value is statically cached for the duration of the request.
  *
- * @since 1.0.0
  *
  * @return string The log level string (e.g., 'DEBUG', 'INFO', 'WARN', 'ERROR').
  */
@@ -31,7 +24,6 @@ function accessSchema_get_log_level() {
 	 * Allows plugins to override the configured log level at runtime.
 	 * Messages below this level will not be recorded.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @param string $level The log level. Accepts 'DEBUG', 'INFO', 'WARN', 'ERROR'. Default 'INFO'.
 	 */

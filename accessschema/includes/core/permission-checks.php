@@ -1,12 +1,5 @@
 <?php
 
-/**
- * File: includes/core/permission-checks.php
- *
- * @version 2.0.4
- * Author: greghacke
- */
-
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -16,7 +9,6 @@ defined( 'ABSPATH' ) || exit;
  * direct matching, child role matching, parent inheritance, and wildcard patterns.
  * Results are cached for performance.
  *
- * @since 1.0.0
  *
  * @param int    $user_id          The WordPress user ID to check.
  * @param string $target_path      The role path to check against.
@@ -107,7 +99,6 @@ function accessSchema_check_permission( $user_id, $target_path, $include_childre
 					 * Allows plugins to control whether having a parent role in the hierarchy
 					 * automatically grants access to child role paths.
 					 *
-					 * @since 1.0.0
 					 *
 					 * @param bool   $grants_access Whether the parent role grants access. Default false.
 					 * @param string $parent_path   The parent role path the user holds.
@@ -141,7 +132,6 @@ function accessSchema_check_permission( $user_id, $target_path, $include_childre
  * Records details about a permission check including request URI, HTTP method,
  * client IP, and user agent for audit trail purposes.
  *
- * @since 1.0.0
  *
  * @param int    $user_id     The WordPress user ID that was checked.
  * @param string $target_path The role path that was checked.
@@ -177,7 +167,6 @@ function accessSchema_log_permission_check( $user_id, $target_path, $result, $re
  * Wraps `accessSchema_role_exists()` with a cached operation layer to minimize
  * database queries for repeated existence checks.
  *
- * @since 1.0.0
  *
  * @param string $role_path The full role path to check for existence.
  * @return bool True if the role exists, false otherwise.
@@ -198,7 +187,6 @@ function accessSchema_role_exists_cached( $role_path ) {
  * Convenience wrapper around `accessSchema_check_permission()` that performs a
  * silent (non-logged) check with wildcard support enabled.
  *
- * @since 1.0.0
  *
  * @param int    $user_id The WordPress user ID to check.
  * @param string $pattern The role path or wildcard pattern to check against.
@@ -214,7 +202,6 @@ function accessSchema_user_can( $user_id, $pattern ) {
  * Convenience wrapper that retrieves the current user ID and delegates
  * to `accessSchema_user_can()`. Returns false if no user is logged in.
  *
- * @since 1.0.0
  *
  * @param string $pattern The role path or wildcard pattern to check against.
  * @return bool True if the current user has access, false otherwise.
@@ -235,7 +222,6 @@ function accessSchema_current_user_can( $pattern ) {
  * leveraging the object cache to avoid redundant queries. Results are logged
  * as a single batch event at the DEBUG level.
  *
- * @since 1.0.0
  *
  * @param int   $user_id     The WordPress user ID to check.
  * @param array $permissions An array of permission paths (strings) or associative arrays
@@ -286,7 +272,6 @@ function accessSchema_check_permissions_batch( $user_id, array $permissions ) {
  * Convenience wrapper around `accessSchema_check_permission()` with wildcard
  * support enabled and logging disabled.
  *
- * @since 1.0.0
  *
  * @param int    $user_id The WordPress user ID to check.
  * @param string $pattern The wildcard role pattern to match against.
@@ -302,7 +287,6 @@ function accessSchema_user_matches_role_pattern( $user_id, $pattern ) {
  * Iterates through the patterns and returns true as soon as any match is found.
  * Results are cached for performance.
  *
- * @since 1.0.0
  *
  * @param int      $user_id  The WordPress user ID to check.
  * @param string[] $patterns An array of role paths or wildcard patterns.
@@ -334,7 +318,6 @@ function accessSchema_user_matches_any( $user_id, array $patterns ) {
  * Iterates through the patterns and returns false as soon as any pattern
  * does not match.
  *
- * @since 1.0.0
  *
  * @param int      $user_id  The WordPress user ID to check.
  * @param string[] $patterns An array of role paths or wildcard patterns.
@@ -355,7 +338,6 @@ function accessSchema_user_matches_all( $user_id, array $patterns ) {
  * Supports `*` for matching a single path segment and `**` for matching
  * any number of segments. Results are cached in a static variable.
  *
- * @since 1.0.0
  *
  * @param string $pattern The wildcard pattern (e.g., 'org/* /admin' or 'org/**').
  * @return string The compiled regular expression string.
@@ -397,7 +379,6 @@ function accessSchema_pattern_to_regex( $pattern ) {
  * Retrieves the full set of roles, capabilities, and restrictions for a user.
  * Results are cached in the database-backed permissions cache table.
  *
- * @since 1.0.0
  *
  * @param int $user_id The WordPress user ID.
  * @return array {
@@ -443,7 +424,6 @@ function accessSchema_get_user_permissions( $user_id ) {
 		 * Allows plugins to define or modify the capabilities that a given
 		 * role path provides to users who hold that role.
 		 *
-		 * @since 1.0.0
 		 *
 		 * @param string[] $capabilities List of capability strings for this role. Default empty array.
 		 * @param string   $role_path    The full role path being queried.
@@ -460,7 +440,6 @@ function accessSchema_get_user_permissions( $user_id ) {
 	 * Allows plugins to define or modify restrictions that limit what a user
 	 * can do, even if they hold certain roles.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @param array    $restrictions List of restriction definitions. Default empty array.
 	 * @param int      $user_id     The WordPress user ID.
@@ -488,7 +467,6 @@ function accessSchema_get_user_permissions( $user_id ) {
  * Retrieves the user's full permissions and checks whether the given
  * capability is present in the capabilities list.
  *
- * @since 1.0.0
  *
  * @param int    $user_id    The WordPress user ID.
  * @param string $capability The capability identifier to check for.

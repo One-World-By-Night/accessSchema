@@ -1,15 +1,6 @@
 <?php
 
-/** File: includes/shortcodes/detail.php
- * Text Domain: accessschema-client
- * version 2.0.4
- *
- * @author greghacke
- * Function: Define shortcodes for accessSchema client to handle user access based on roles or patterns.
- */
-
 defined( 'ABSPATH' ) || exit;
-
 
 add_action(
 	'init',

@@ -1,10 +1,4 @@
 <?php
-/**
- * File: includes/core/init.php
- *
- * @version 2.0.4
- * Author: greghacke
- */
 
 defined( 'ABSPATH' ) || exit;
 
@@ -14,7 +8,6 @@ defined( 'ABSPATH' ) || exit;
  * Loads the text domain for translations, fires the plugin initialization
  * action, and sets the initialization flag in the object cache.
  *
- * @since 1.0.0
  *
  * @return void
  */
@@ -28,7 +21,6 @@ function accessSchema_init() {
 	 * Use this action to register custom roles, add integration hooks,
 	 * or perform setup tasks that depend on Access Schema being loaded.
 	 *
-	 * @since 1.0.0
 	 */
 	do_action( 'accessSchema_init' );
 

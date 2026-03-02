@@ -1,16 +1,7 @@
 <?php
-/**
- * File: includes/render/render-functions.php
- *
- * @version 2.0.4
- * Author: greghacke
- */
 
 defined( 'ABSPATH' ) || exit;
 
-/**
- * Render role badge
- */
 function accessSchema_render_role_badge( $role_path, $show_full_path = false ) {
 	$role_parts = explode( '/', $role_path );
 	$role_name  = end( $role_parts );

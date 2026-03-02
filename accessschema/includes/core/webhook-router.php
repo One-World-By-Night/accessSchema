@@ -1,22 +1,5 @@
 <?php
 
-/**
- * File: includes/core/webhook-router.php
- *
- * @version 2.0.4
- * Author: greghacke
- *
- * Access Schema REST API Routes
- *
- * This file defines the REST API endpoints for managing access schema roles and permissions.
- * It includes endpoints for registering roles, granting/revoking roles to/from users,
- * checking user permissions, and handling CORS preflight requests.
- *
- * Use of the API required a shared API key defined in the wp-config.php file:
- * define('ACCESSSCHEMA_API_KEY_RO', 'your_api_ro_key_here');
- * define('ACCESSSCHEMA_API_KEY_RW', 'your_api_rw_key_here'); // Optional, for read-write access
- */
-
 defined( 'ABSPATH' ) || exit;
 
 add_action(
@@ -141,7 +124,6 @@ add_action(
  * Ensures that the paths parameter is a non-empty array where each element
  * is an array of non-empty string segments.
  *
- * @since 1.0.0
  *
  * @param array           $paths   The paths value to validate.
  * @param WP_REST_Request $request The current REST request object.
@@ -175,7 +157,6 @@ function accessSchema_validate_paths_array( $paths, $request, $key ) {
  * API keys. Enforces rate limiting and logs all access attempts. Read endpoints
  * accept either key type; write endpoints require the read-write key.
  *
- * @since 1.0.0
  *
  * @param WP_REST_Request $request The current REST request object.
  * @return true|WP_Error True if authorized, WP_Error on failure (403 or 429).
@@ -282,7 +263,6 @@ function accessSchema_api_permission_check( $request ) {
  * Uses a database-backed sliding window to track request counts. Creates the
  * rate limits table if it does not exist. Cleans up expired entries on each call.
  *
- * @since 1.0.0
  *
  * @param string $identifier The client identifier to rate limit (typically an IP address).
  * @return bool True if the request is within the rate limit, false if exceeded.
@@ -310,7 +290,6 @@ function accessSchema_check_rate_limit( $identifier ) {
 	/**
 	 * Filters the maximum number of API requests allowed per rate limit window.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @param int $max_requests The maximum number of requests per window. Default 60.
 	 */
@@ -370,7 +349,6 @@ function accessSchema_check_rate_limit( $identifier ) {
  * Looks up the user by 'id' or 'email' from the provided parameters. Returns
  * null if no user is found or if the user lacks the 'read' capability.
  *
- * @since 1.0.0
  *
  * @param array $params Associative array with optional 'id' (int) or 'email' (string) keys.
  * @return WP_User|null The resolved user object, or null if not found or invalid.
@@ -399,7 +377,6 @@ function accessSchema_resolve_user( $params ) {
  * tree within a database transaction. Returns lists of successfully registered
  * and failed paths.
  *
- * @since 1.0.0
  *
  * @param WP_REST_Request $request The REST request object containing a 'paths' parameter.
  * @return WP_REST_Response|WP_Error Response with 'registered' and 'failed' arrays, or error on transaction failure.
@@ -455,7 +432,6 @@ function accessSchema_api_register_roles( $request ) {
  * Resolves the user from the request body (by id or email) and returns their
  * assigned role paths. Results are cached for 5 minutes.
  *
- * @since 1.0.0
  *
  * @param WP_REST_Request $request The REST request object with user identification parameters.
  * @return WP_REST_Response|WP_Error Response with 'email' and 'roles' keys, or error if user not found.
@@ -532,7 +508,6 @@ function accessSchema_api_get_roles( $request ) {
  * Resolves the user, validates the role path and optional expiration date,
  * then assigns the role. Clears the API cache for the affected user.
  *
- * @since 1.0.0
  *
  * @param WP_REST_Request $request The REST request object with 'role_path' and user identification.
  * @return WP_REST_Response|WP_Error Response with grant result, or error on invalid request.
@@ -576,7 +551,6 @@ function accessSchema_api_grant_role( $request ) {
  * Resolves the user and removes the specified role assignment. Clears the
  * API cache for the affected user.
  *
- * @since 1.0.0
  *
  * @param WP_REST_Request $request The REST request object with 'role_path' and user identification.
  * @return WP_REST_Response|WP_Error Response with revoke result, or error on invalid request.
@@ -610,7 +584,6 @@ function accessSchema_api_revoke_role( $request ) {
  * role path. Supports optional child role inclusion. Results are cached
  * for 5 minutes.
  *
- * @since 1.0.0
  *
  * @param WP_REST_Request $request The REST request object with 'role_path', optional 'include_children', and user identification.
  * @return WP_REST_Response|WP_Error Response with 'granted' boolean, or error on invalid request.
@@ -656,7 +629,6 @@ function accessSchema_api_check_permission( $request ) {
  * Returns both a flat list and the hierarchical tree of all registered roles.
  * The flat list includes id, name, path, depth, and parent_id for each role.
  *
- * @since 1.0.0
  *
  * @param WP_REST_Request $request The REST request object.
  * @return WP_REST_Response Response with 'total', 'roles' (flat list), and 'hierarchy' (tree) keys.
@@ -688,7 +660,6 @@ function accessSchema_api_get_all_roles( $request ) {
  * Walks through each node and its children, appending a simplified
  * representation (id, name, path, depth, parent_id) to the result array.
  *
- * @since 1.0.0
  *
  * @param array $nodes  An array of role node arrays, each with optional 'children' key.
  * @param array $result Reference to the flat result array to append to.
@@ -725,7 +696,6 @@ add_action(
 				 * Allows plugins to add or modify the origins permitted to make
 				 * cross-origin requests to the Access Schema REST API.
 				 *
-				 * @since 1.0.0
 				 *
 				 * @param string[] $allowed_origins List of allowed origin URLs. Default contains the requesting origin.
 				 */

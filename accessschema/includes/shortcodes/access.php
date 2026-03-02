@@ -1,10 +1,4 @@
 <?php
-/**
- * File: includes/shortcodes/access.php
- *
- * @version 2.0.4
- * Author: greghacke
- */
 
 defined( 'ABSPATH' ) || exit;
 
@@ -15,7 +9,6 @@ defined( 'ABSPATH' ) || exit;
  * single role checks, ANY/ALL multi-role checks, NOT exclusions, wildcard
  * patterns, child role inclusion, and optional debug output.
  *
- * @since 1.0.0
  *
  * @param array       $atts    Shortcode attributes.
  * @param string|null $content The enclosed shortcode content. Default null.
@@ -30,7 +23,6 @@ function accessSchema_shortcode_access( $atts, $content = null ) {
 		 * Allows plugins to customize the content displayed when a non-authenticated
 		 * user encounters an [access_schema] shortcode.
 		 *
-		 * @since 1.0.0
 		 *
 		 * @param string      $output  The output string. Default empty string.
 		 * @param array       $atts    The shortcode attributes.

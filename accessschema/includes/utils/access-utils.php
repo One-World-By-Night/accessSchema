@@ -1,16 +1,7 @@
 <?php
-/**
- * File: includes/utils/access-utils.php
- *
- * @version 2.0.4
- * Author: greghacke
- */
 
 defined( 'ABSPATH' ) || exit;
 
-/**
- * Check if current user has access via patterns
- */
 function accessSchema_access_granted( $patterns ) {
 	if ( ! is_user_logged_in() ) {
 		return apply_filters( 'accessSchema_access_granted', false, $patterns, 0 );

@@ -1,13 +1,5 @@
 <?php
 
-/** File: includes/core/client-init.php
- * Text Domain: accessschema-client
- * version 2.4.0
- *
- * @author greghacke
- * Function: Register this client instance and set up per-instance hooks.
- */
-
 defined( 'ABSPATH' ) || exit;
 
 // Use instance variables inherited from accessSchema-client.php.

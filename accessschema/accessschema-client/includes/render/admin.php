@@ -1,13 +1,5 @@
 <?php
 
-/** File: includes/render/admin.php
- * Text Domain: accessschema-client
- * version 2.0.4
- *
- * @author greghacke
- * Function: Renders the admin settings and user cache management interface
- */
-
 defined( 'ABSPATH' ) || exit;
 
 if ( ! function_exists( 'accessSchema_client_register_render_admin' ) ) {

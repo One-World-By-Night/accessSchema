@@ -1,20 +1,17 @@
 <?php
 /**
  * Plugin Name: Gravity Forms AccessSchema User Registration
- * Plugin URI: https://github.com/One-World-By-Night/gf-accessschema-user-registration
+ * Plugin URI: https://github.com/One-World-By-Night/accessSchema
  * Description: Creates WordPress users from Gravity Forms submissions with AccessSchema role assignment.
- * Version: 1.0.2
+ * Version: 1.1.0
  * Author: One World By Night
- * Author URI: https://www.owbn.net
  * License: GPL-2.0-or-later
- * License URI: http://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: gf-asc-user-registration
- * Domain Path: /languages
  */
 
 defined( 'ABSPATH' ) || die();
 
-define( 'GF_ASC_UR_VERSION', '1.0.2' );
+define( 'GF_ASC_UR_VERSION', '1.1.0' );
 define( 'GF_ASC_UR_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'GF_ASC_UR_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
@@ -24,14 +21,12 @@ add_action( 'gform_loaded', array( 'GF_ASC_User_Registration_Bootstrap', 'load' 
 /**
  * Bootstrap class for the AccessSchema User Registration add-on.
  *
- * @since 1.0.0
  */
 class GF_ASC_User_Registration_Bootstrap {
 
 	/**
 	 * Load the add-on if the Feed Add-On Framework is available.
 	 *
-	 * @since 1.0.0
 	 */
 	public static function load() {
 
@@ -49,7 +44,6 @@ class GF_ASC_User_Registration_Bootstrap {
 /**
  * Returns an instance of the GF_ASC_User_Registration class.
  *
- * @since 1.0.0
  *
  * @return GF_ASC_User_Registration
  */

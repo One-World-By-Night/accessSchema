@@ -1,35 +1,16 @@
 <?php
 /**
  * Plugin Name: accessSchema Client
- * Text Domain: accessschema-client
- * Plugin URI: https://www.github.com/One-World-By-Night/accessschema-client
- * Description: Leveraging a hosted accessSchema instance, this plugin provides a WordPress client for the accessSchema API.
- * Version: 2.4.0
+ * Plugin URI: https://github.com/One-World-By-Night/accessSchema
+ * Description: WordPress client for a hosted accessSchema instance.
+ * Version: 2.5.0
  * Author: greghacke
- * Contributors: list, of, contributors, separated, by, commas
- * Author URI: https://www.github.com/One-World-By-Night
  * License: GPL-2.0-or-later
- * License URI: http://www.gnu.org/licenses/gpl-2.0.html
- * Domain Path: /includes/languages
- * GitHub Branch: main
+ * Text Domain: accessschema-client
  */
 
 defined( 'ABSPATH' ) || exit;
 
-/**
- * -----------------------------------------------------------------------------
- * LOAD INSTANCE-SPECIFIC PREFIX
- *
- * prefix.php sets two variables (NOT constants):
- *   $asc_instance_prefix — e.g., 'OWBNBOARD'
- *   $asc_instance_label  — e.g., 'OWBN Board'
- *
- * Using variables allows multiple plugins to each embed their own client
- * without constant-redefinition collisions.
- *
- * Location: accessschema-client/prefix.php
- * -----------------------------------------------------------------------------
- */
 $prefix_file = __DIR__ . '/prefix.php';
 
 if ( ! file_exists( $prefix_file ) ) {

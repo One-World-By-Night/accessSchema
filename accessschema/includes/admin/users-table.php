@@ -1,19 +1,10 @@
 <?php
-/**
- * File: includes/admin/users-table.php
- *
- * Adds ASC role column and filter to the WP Admin Users table.
- *
- * @version 2.1.1
- * Author: greghacke
- */
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Add the ASC Roles column to the Users table.
  *
- * @since 2.0.3
  *
  * @param string[] $columns Existing column definitions.
  * @return string[] Modified column definitions.
@@ -29,7 +20,6 @@ add_filter( 'manage_users_columns', 'accessSchema_add_users_column' );
  *
  * Uses batch-loaded role data to avoid N+1 queries.
  *
- * @since 2.0.3
  *
  * @param string $output      The existing column output.
  * @param string $column_name The column being rendered.
@@ -115,7 +105,6 @@ add_filter( 'manage_users_custom_column', 'accessSchema_render_users_column', 10
  * Returns an associative array keyed by user_id, each containing
  * an array of full_path strings.
  *
- * @since 2.0.3
  *
  * @return array<int, string[]> User roles grouped by user ID.
  */
@@ -156,7 +145,6 @@ function accessSchema_batch_get_user_roles_for_list() {
  * Outputs a Select2-powered dropdown of all role paths and a text
  * input for wildcard pattern matching.
  *
- * @since 2.0.3
  *
  * @param string $which The position of the filter ('top' or 'bottom').
  * @return void
@@ -215,7 +203,6 @@ add_action( 'restrict_manage_users', 'accessSchema_users_filter_ui' );
  * Hooks into pre_user_query to add JOINs and WHERE clauses against
  * the accessSchema role tables.
  *
- * @since 2.0.3
  *
  * @param WP_User_Query $query The user query object.
  * @return void
@@ -300,7 +287,6 @@ add_action( 'pre_user_query', 'accessSchema_filter_users_by_role' );
  * Supports * (single path segment) and ** (any number of segments),
  * mirroring the logic in accessSchema_pattern_to_regex().
  *
- * @since 2.0.3
  *
  * @param string $pattern The wildcard pattern (e.g. 'chronicles/ * /hst' or 'coordinators/**').
  * @return string|false The SQL condition string, or false if the pattern is invalid.
@@ -339,7 +325,6 @@ function accessSchema_pattern_to_sql_regexp( $pattern ) {
  * Loads Select2 for the filter dropdown and the main plugin stylesheet
  * for badge styles.
  *
- * @since 2.0.3
  *
  * @param string $hook The current admin page hook suffix.
  * @return void

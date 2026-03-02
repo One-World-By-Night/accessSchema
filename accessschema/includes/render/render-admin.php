@@ -1,16 +1,7 @@
 <?php
-/**
- * File: includes/render/render-admin.php
- *
- * @version 2.0.4
- * Author: greghacke
- */
 
 defined( 'ABSPATH' ) || exit;
 
-/**
- * Get all available roles with hierarchy
- */
 function accessSchema_get_available_roles() {
 	$cache_key = 'accessSchema_all_roles_hierarchy';
 	$cached    = wp_cache_get( $cache_key, 'accessSchema' );

@@ -1,10 +1,4 @@
 <?php
-/**
- * File: includes/core/user-roles.php
- *
- * @version 2.0.4
- * Author: greghacke
- */
 
 defined( 'ABSPATH' ) || exit;
 
@@ -15,7 +9,6 @@ defined( 'ABSPATH' ) || exit;
  * conflicts and maximum role limits, then inserts the assignment. Fires
  * the `accessSchema_role_added` action on success and clears user caches.
  *
- * @since 1.0.0
  *
  * @param int         $user_id      The WordPress user ID to assign the role to.
  * @param string      $role_path    The full role path to assign (e.g., 'org/council/admin').
@@ -128,7 +121,6 @@ function accessSchema_add_role( $user_id, $role_path, $performed_by = null, $exp
 		/**
 		 * Fires after a role has been successfully added to a user.
 		 *
-		 * @since 1.0.0
 		 *
 		 * @param int      $user_id      The WordPress user ID the role was assigned to.
 		 * @param string   $role_path    The full role path that was assigned.
@@ -146,7 +138,6 @@ function accessSchema_add_role( $user_id, $role_path, $performed_by = null, $exp
  * Looks up the role by its full path, removes the user-role assignment from the
  * database, clears caches, and fires the `accessSchema_role_removed` action on success.
  *
- * @since 1.0.0
  *
  * @param int      $user_id      The WordPress user ID to remove the role from.
  * @param string   $role_path    The full role path to remove.
@@ -202,7 +193,6 @@ function accessSchema_remove_role( $user_id, $role_path, $performed_by = null ) 
 		/**
 		 * Fires after a role has been successfully removed from a user.
 		 *
-		 * @since 1.0.0
 		 *
 		 * @param int      $user_id      The WordPress user ID the role was removed from.
 		 * @param string   $role_path    The full role path that was removed.
@@ -220,7 +210,6 @@ function accessSchema_remove_role( $user_id, $role_path, $performed_by = null ) 
  * Checks for role conflicts, enforces the maximum roles per user limit,
  * and allows custom validation through the `accessSchema_validate_role_assignment` filter.
  *
- * @since 1.0.0
  *
  * @param int      $user_id        The WordPress user ID.
  * @param string   $new_role       The role path to be assigned.
@@ -235,7 +224,6 @@ function accessSchema_validate_role_assignment( $user_id, $new_role, $existing_r
 	 * assigned. If a user already holds a role matching any conflict pattern,
 	 * the new assignment will be blocked.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @param string[] $conflicts List of conflicting role patterns (supports fnmatch syntax). Default empty array.
 	 * @param string   $new_role  The role path being assigned.
@@ -253,7 +241,6 @@ function accessSchema_validate_role_assignment( $user_id, $new_role, $existing_r
 	/**
 	 * Filters the maximum number of roles a user can hold simultaneously.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @param int $max_roles The maximum number of roles allowed. Default 50.
 	 * @param int $user_id   The WordPress user ID being checked.
@@ -269,7 +256,6 @@ function accessSchema_validate_role_assignment( $user_id, $new_role, $existing_r
 	 * Allows plugins to perform custom validation logic before a role is
 	 * assigned to a user. Return false to block the assignment.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @param bool     $valid          Whether the assignment is valid. Default true.
 	 * @param int      $user_id        The WordPress user ID.
@@ -285,7 +271,6 @@ function accessSchema_validate_role_assignment( $user_id, $new_role, $existing_r
  * Returns only the exact roles directly assigned to the user (not parent roles).
  * Results are cached in the object cache for 1 hour by default.
  *
- * @since 1.0.0
  *
  * @param int  $user_id         The WordPress user ID.
  * @param bool $include_expired Optional. Whether to include expired role assignments. Default false.
@@ -340,7 +325,6 @@ function accessSchema_get_user_roles( $user_id, $include_expired = false, $use_c
  * as registered roles. This is a utility function and is not automatically
  * included in user role lookups.
  *
- * @since 1.0.0
  *
  * @param string $role_path The full role path to find parents for.
  * @return string[] An array of parent role path strings, from nearest to farthest.
@@ -365,7 +349,6 @@ function accessSchema_get_parent_roles( $role_path ) {
  * Combines the user's directly assigned roles with all parent roles from the
  * hierarchy. Use this when you need the complete set of roles a user holds.
  *
- * @since 1.0.0
  *
  * @param int  $user_id         The WordPress user ID.
  * @param bool $include_expired Optional. Whether to include expired role assignments. Default false.
@@ -392,7 +375,6 @@ function accessSchema_get_user_roles_with_inheritance( $user_id, $include_expire
  * Compares the desired role set with the current assignments, then adds
  * missing roles and removes excess roles within a database transaction.
  *
- * @since 1.0.0
  *
  * @param int      $user_id      The WordPress user ID.
  * @param string[] $new_roles    The desired set of full role path strings.
@@ -452,7 +434,6 @@ function accessSchema_save_user_roles( $user_id, $new_roles, $performed_by = nul
  * Clears affected user caches and logs the cleanup count. Intended to be
  * run via the `accessSchema_daily_cleanup` scheduled action.
  *
- * @since 1.0.0
  *
  * @return int The number of expired role assignments that were deactivated.
  */
@@ -523,7 +504,6 @@ add_action( 'accessSchema_daily_cleanup', 'accessSchema_cleanup_expired_roles' )
  * Retrieves users assigned to the given role path. Optionally includes users
  * who hold child roles. Supports pagination and ordering.
  *
- * @since 1.0.0
  *
  * @param string $role_path The full role path to search for.
  * @param array  $args {

@@ -1,13 +1,5 @@
 <?php
 
-/** File: includes/core/client-api.php
- * Text Domain: accessschema-client
- * version 2.4.0
- *
- * @author greghacke
- * Function: This file contains the core client API functions for AccessSchema.
- */
-
 defined( 'ABSPATH' ) || exit;
 
 if ( ! function_exists( 'as_client_option_key' ) ) {
@@ -279,7 +271,6 @@ if ( ! function_exists( 'accessSchema_refresh_roles_for_user' ) ) {
 	 *
 	 * Supports both remote (REST API) and local (direct function call) modes.
 	 *
-	 * @since 2.0.0
 	 *
 	 * @param WP_User $user      The WordPress user object.
 	 * @param string  $client_id The client instance identifier.
@@ -465,7 +456,6 @@ if ( ! function_exists( 'asc_expand_role_path' ) ) {
 	}
 }
 
-
 if ( ! function_exists( 'accessSchema_client_local_post' ) ) {
 	/**
 	 * Call a server API function directly in local mode.
@@ -473,7 +463,6 @@ if ( ! function_exists( 'accessSchema_client_local_post' ) ) {
 	 * Bypasses REST API transport by calling the server callback function
 	 * with a WP_REST_Request containing the body as JSON params.
 	 *
-	 * @since 2.0.0
 	 *
 	 * @param string $endpoint The API endpoint name (roles, grant, revoke, check).
 	 * @param array  $body     The request body parameters.
@@ -509,7 +498,6 @@ if ( ! function_exists( 'accessSchema_client_local_get_roles_by_email' ) ) {
 	/**
 	 * Get user roles via local server function call.
 	 *
-	 * @since 2.1.1
 	 *
 	 * @param string $email     The user email address.
 	 * @param string $client_id The client instance identifier.
@@ -528,7 +516,6 @@ if ( ! function_exists( 'accessSchema_client_local_check_access' ) ) {
 	/**
 	 * Check user access to a role path via local server function call.
 	 *
-	 * @since 2.1.1
 	 *
 	 * @param string $email     The user email address.
 	 * @param string $role_path The role path to check.

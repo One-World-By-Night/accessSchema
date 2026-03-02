@@ -1,13 +1,5 @@
 <?php
 
-/** File: includes/admin/users.php
- * Text Domain: accessschema-client
- *
- * @version 2.1.1
- * @author greghacke
- * Function: Define admin users page for AccessSchema client
- */
-
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -139,7 +131,6 @@ add_filter(
 /**
  * Render roles grouped by top-level category.
  *
- * @since 2.1.1
  *
  * @param string[] $roles Array of full role path strings.
  * @return string HTML output of grouped roles.
@@ -287,7 +278,6 @@ add_action(
  *
  * Only loads when at least one client is in remote mode.
  *
- * @since 2.1.1
  */
 add_action(
 	'admin_enqueue_scripts',

@@ -1,10 +1,4 @@
 <?php
-/**
- * File: includes/core/helpers.php
- *
- * @version 2.0.4
- * Author: greghacke
- */
 
 defined( 'ABSPATH' ) || exit;
 

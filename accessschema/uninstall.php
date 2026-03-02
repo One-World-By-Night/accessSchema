@@ -1,10 +1,4 @@
 <?php
-/**
- * File: uninstall.php
- *
- * @version 2.0.4
- * Author: greghacke
- */
 
 // Exit if accessed directly or not via WP uninstall process
 defined( 'WP_UNINSTALL_PLUGIN' ) || exit;

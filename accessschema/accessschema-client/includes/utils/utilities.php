@@ -1,15 +1,6 @@
 <?php
 
-/** File: includes/utils/utilities.php
- * Text Domain: accessschema-client
- * version 2.0.4
- *
- * @author greghacke
- * Function: Utility functions for AccessSchema client plugin
- */
-
 defined( 'ABSPATH' ) || exit;
-
 
 if ( ! function_exists( 'accessSchema_client_access_granted' ) ) {
 	/**

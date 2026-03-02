@@ -2,8 +2,6 @@
 /**
  * Custom Gravity Forms field: AccessSchema Roles (Select2 multi-select).
  *
- * @package GF_ASC_User_Registration
- * @since   1.0.0
  */
 
 defined( 'ABSPATH' ) || die();
@@ -14,7 +12,6 @@ defined( 'ABSPATH' ) || die();
  * Renders as a Select2 multi-select in admin entry views and Gravity Flow
  * approval steps. Stores selected role paths as a comma-separated string.
  *
- * @since 1.0.0
  *
  * @see GF_Field
  */
@@ -30,7 +27,6 @@ class GF_Field_ASC_Roles extends GF_Field {
 	/**
 	 * Return the field title for the form editor.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @return string
 	 */
@@ -41,7 +37,6 @@ class GF_Field_ASC_Roles extends GF_Field {
 	/**
 	 * Return the field description for the form editor.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @return string
 	 */
@@ -52,7 +47,6 @@ class GF_Field_ASC_Roles extends GF_Field {
 	/**
 	 * Assign the field to the Advanced Fields group in the form editor.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @return array
 	 */
@@ -66,7 +60,6 @@ class GF_Field_ASC_Roles extends GF_Field {
 	/**
 	 * Define which standard field settings are available.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @return array
 	 */
@@ -84,7 +77,6 @@ class GF_Field_ASC_Roles extends GF_Field {
 	/**
 	 * Field is supported by conditional logic.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @return bool
 	 */
@@ -98,7 +90,6 @@ class GF_Field_ASC_Roles extends GF_Field {
 	 * For public-facing forms, this renders as a hidden/read-only field.
 	 * The actual Select2 UI is rendered only in admin contexts.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @param array  $form  The current form.
 	 * @param string $value The field value.
@@ -145,7 +136,6 @@ class GF_Field_ASC_Roles extends GF_Field {
 	/**
 	 * Render the Select2 multi-select for admin entry editing.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @param string $field_id The HTML element ID.
 	 * @param int    $id       The GF field ID.
@@ -195,7 +185,6 @@ class GF_Field_ASC_Roles extends GF_Field {
 	/**
 	 * Format the field value for display in entry lists and detail views.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @param string|array $value      The field value.
 	 * @param int          $entry_id   The entry ID.
@@ -222,7 +211,6 @@ class GF_Field_ASC_Roles extends GF_Field {
 	/**
 	 * Format the field value for the entry detail page.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @param string|array $value    The field value.
 	 * @param string       $currency The currency code.
@@ -254,7 +242,6 @@ class GF_Field_ASC_Roles extends GF_Field {
 	/**
 	 * Render roles grouped by top-level category.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @param string[] $roles Array of full role path strings.
 	 *
@@ -316,7 +303,6 @@ class GF_Field_ASC_Roles extends GF_Field {
 	/**
 	 * Sanitize the field value on save.
 	 *
-	 * @since 1.0.0
 	 *
 	 * @param string $value      The submitted value.
 	 * @param array  $form       The current form.

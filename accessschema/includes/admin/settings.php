@@ -1,12 +1,5 @@
 <?php
 
-/**
- * File: includes/admin/settings.php
- *
- * @version 2.0.4
- * Author: greghacke
- */
-
 defined( 'ABSPATH' ) || exit;
 
 add_action( 'admin_menu', 'accessSchema_add_settings_page' );
