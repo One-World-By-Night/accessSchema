@@ -69,18 +69,11 @@ function accessSchema_get_active_rules() {
 	return $rules;
 }
 
-/**
- * Check if a role path matches a pattern.
- *
- * Patterns:
- *   - Exact match: "coordinator/sabbat/coordinator"
- *   - Single wildcard: "chronicle/*/cm" matches "chronicle/kony/cm"
- *   - Double wildcard: "player/under-da/**" matches "player/under-da/anything/deep"
- *
- * @param string $pattern The rule pattern.
- * @param string $path    The role path to check.
- * @return bool
- */
+// Check if a role path matches a pattern.
+// Supports exact match, single wildcard (*), and double wildcard (**).
+// @param string $pattern The rule pattern.
+// @param string $path    The role path to check.
+// @return bool
 function accessSchema_pattern_matches( string $pattern, string $path ): bool {
 	// Exact match
 	if ( $pattern === $path ) {
