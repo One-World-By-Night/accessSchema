@@ -3,7 +3,7 @@
  * Plugin Name: accessSchema
  * Plugin URI: https://github.com/One-World-By-Night/accessSchema
  * Description: Hierarchical role-based access control with audit logging and REST API.
- * Version: 2.3.0
+ * Version: 2.4.0
  * Author: greghacke
  * License: GPL-2.0-or-later
  * Text Domain: accessschema
@@ -27,6 +27,8 @@ $required_files = array(
 	'includes/admin/role-manager.php',
 	'includes/admin/settings.php',
 	'includes/admin/users-table.php',
+	'includes/core/rules-engine.php',
+	'includes/admin/rules-admin.php',
 	'includes/shortcodes/access.php',
 	'includes/utils/access-utils.php',
 );

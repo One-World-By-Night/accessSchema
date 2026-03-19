@@ -536,13 +536,23 @@ function accessSchema_api_grant_role( $request ) {
 	// Clear cache
 	wp_cache_delete( 'api_user_roles_' . $user->ID, 'accessSchema' );
 
-	return rest_ensure_response(
-		array(
-			'email'      => $user->user_email,
-			'granted'    => $result,
-			'expires_at' => $expires_at,
-		)
+	$response = array(
+		'email'      => $user->user_email,
+		'granted'    => $result,
+		'expires_at' => $expires_at,
 	);
+
+	// If denied by rules engine, include the reason
+	if ( ! $result ) {
+		$denial = get_transient( 'accessSchema_grant_denial_' . $user->ID . '_' . md5( $role_path ) );
+		if ( $denial && is_array( $denial ) ) {
+			$response['reason']  = $denial['reason'] ?? '';
+			$response['rule_id'] = $denial['rule_id'] ?? null;
+			delete_transient( 'accessSchema_grant_denial_' . $user->ID . '_' . md5( $role_path ) );
+		}
+	}
+
+	return rest_ensure_response( $response );
 }
 
 /**

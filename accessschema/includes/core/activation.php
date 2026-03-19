@@ -174,6 +174,14 @@ function accessSchema_create_tables() {
 		$errors[] = 'Failed to create permissions cache table: ' . $wpdb->last_error;
 	}
 
+	// Rules table
+	if ( function_exists( 'accessSchema_create_rules_table' ) ) {
+		accessSchema_create_rules_table();
+		if ( $wpdb->last_error ) {
+			$errors[] = 'Failed to create rules table: ' . $wpdb->last_error;
+		}
+	}
+
 	// Return errors if any
 	if ( ! empty( $errors ) ) {
 		return new WP_Error( 'table_creation_failed', implode( ', ', $errors ) );
