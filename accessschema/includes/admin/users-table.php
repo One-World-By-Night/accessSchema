@@ -64,10 +64,17 @@ function accessSchema_render_users_column( $output, $column_name, $user_id ) {
 		);
 	}
 
+	// Fixed color mapping by category name
+	$category_colors = array(
+		'player'      => 'accessSchema-cat-player',
+		'chronicle'   => 'accessSchema-cat-chronicle',
+		'coordinator' => 'accessSchema-cat-coordinator',
+		'exec'        => 'accessSchema-cat-exec',
+	);
+
 	$html = '<div class="accessSchema-role-list">';
-	$cat_index = 0;
 	foreach ( $grouped as $category => $roles ) {
-		$color_class = 'accessSchema-cat-' . ( $cat_index % 5 );
+		$color_class = isset( $category_colors[ $category ] ) ? $category_colors[ $category ] : 'accessSchema-cat-other';
 
 		$html .= sprintf(
 			'<div class="accessSchema-role-group %s">',
@@ -91,7 +98,6 @@ function accessSchema_render_users_column( $output, $column_name, $user_id ) {
 		}
 
 		$html .= '</div>';
-		++$cat_index;
 	}
 	$html .= '</div>';
 

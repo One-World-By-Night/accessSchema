@@ -333,21 +333,21 @@
     cursor: default;
 }
 
-/* Category colors — rotate through 5 */
-.accessSchema-cat-0 { border-left-color: #1565c0; }
-.accessSchema-cat-0 .accessSchema-role-category { color: #1565c0; }
+/* Category colors — fixed per group */
+.accessSchema-cat-player { border-left-color: #1565c0; }
+.accessSchema-cat-player .accessSchema-role-category { color: #1565c0; }
 
-.accessSchema-cat-1 { border-left-color: #6a1b9a; }
-.accessSchema-cat-1 .accessSchema-role-category { color: #6a1b9a; }
+.accessSchema-cat-chronicle { border-left-color: #2e7d32; }
+.accessSchema-cat-chronicle .accessSchema-role-category { color: #2e7d32; }
 
-.accessSchema-cat-2 { border-left-color: #2e7d32; }
-.accessSchema-cat-2 .accessSchema-role-category { color: #2e7d32; }
+.accessSchema-cat-coordinator { border-left-color: #6a1b9a; }
+.accessSchema-cat-coordinator .accessSchema-role-category { color: #6a1b9a; }
 
-.accessSchema-cat-3 { border-left-color: #e65100; }
-.accessSchema-cat-3 .accessSchema-role-category { color: #e65100; }
+.accessSchema-cat-exec { border-left-color: #e65100; }
+.accessSchema-cat-exec .accessSchema-role-category { color: #e65100; }
 
-.accessSchema-cat-4 { border-left-color: #c2185b; }
-.accessSchema-cat-4 .accessSchema-role-category { color: #c2185b; }
+.accessSchema-cat-other { border-left-color: #c2185b; }
+.accessSchema-cat-other .accessSchema-role-category { color: #c2185b; }
 
 .accessSchema-no-roles {
     color: #646970;
