@@ -1126,11 +1126,17 @@ class GF_ASC_User_Registration extends GFFeedAddOn {
 
 		// Approve the Gravity Flow workflow step if active.
 		if ( class_exists( 'Gravity_Flow' ) ) {
-			$api = new Gravity_Flow_API( $form_id );
-			$current_step = $api->get_current_step( $entry );
-			if ( $current_step && 'approval' === $current_step->get_type() ) {
-				$current_step->approve();
-				$api->process_workflow( $entry_id );
+			$entry_fresh = GFAPI::get_entry( $entry_id );
+			$api         = new Gravity_Flow_API( $form_id );
+			$step        = $api->get_current_step( $entry_fresh );
+			if ( $step && 'approval' === $step->get_type() ) {
+				$assignee = $step->get_assignee( 'role|administrator' );
+				if ( $assignee ) {
+					$step->process_assignee_status( $assignee, 'approved', $form );
+				}
+				if ( $step->is_complete() ) {
+					$api->process_workflow( $entry_id );
+				}
 			}
 		}
 
