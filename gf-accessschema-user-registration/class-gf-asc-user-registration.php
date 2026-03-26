@@ -121,6 +121,9 @@ class GF_ASC_User_Registration extends GFFeedAddOn {
 
 		// Add "Create Account" panel on entry detail page (main content, below notes).
 		add_action( 'gform_entry_detail', array( $this, 'render_entry_meta_box' ), 10, 2 );
+
+		// Also render in Gravity Flow inbox entry detail.
+		add_action( 'gravityflow_entry_detail', array( $this, 'render_entry_meta_box' ), 10, 2 );
 	}
 
 	/**

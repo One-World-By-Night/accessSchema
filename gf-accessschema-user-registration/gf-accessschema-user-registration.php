@@ -3,7 +3,7 @@
  * Plugin Name: Gravity Forms AccessSchema User Registration
  * Plugin URI: https://github.com/One-World-By-Night/accessSchema
  * Description: Creates WordPress users from Gravity Forms submissions with AccessSchema role assignment.
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author: One World By Night
  * License: GPL-2.0-or-later
  * Text Domain: gf-asc-user-registration
@@ -11,7 +11,7 @@
 
 defined( 'ABSPATH' ) || die();
 
-define( 'GF_ASC_UR_VERSION', '1.1.0' );
+define( 'GF_ASC_UR_VERSION', '1.2.0' );
 define( 'GF_ASC_UR_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'GF_ASC_UR_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
