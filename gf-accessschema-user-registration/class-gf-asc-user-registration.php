@@ -1124,6 +1124,16 @@ class GF_ASC_User_Registration extends GFFeedAddOn {
 			gform_update_meta( $entry_id, 'gf_asc_user_created', $user_id );
 		}
 
+		// Approve the Gravity Flow workflow step if active.
+		if ( class_exists( 'Gravity_Flow' ) ) {
+			$api = new Gravity_Flow_API( $form_id );
+			$current_step = $api->get_current_step( $entry );
+			if ( $current_step && 'approval' === $current_step->get_type() ) {
+				$current_step->approve();
+				$api->process_workflow( $entry_id );
+			}
+		}
+
 		wp_send_json_success(
 			array(
 				'message' => sprintf( 'User account created successfully (User ID: %d).', $user_id ),
