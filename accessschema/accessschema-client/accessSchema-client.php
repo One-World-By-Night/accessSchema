@@ -15,8 +15,8 @@ $prefix_file = __DIR__ . '/prefix.php';
 
 if ( ! file_exists( $prefix_file ) ) {
 	wp_die(
-		esc_html__( 'accessSchema-client requires a prefix.php file.', 'accessschema-client' ),
-		esc_html__( 'Missing File: prefix.php', 'accessschema-client' ),
+		esc_html__( 'accessSchema-client requires a prefix.php file.', 'accessschema' ),
+		esc_html__( 'Missing File: prefix.php', 'accessschema' ),
 		array( 'response' => 500 )
 	);
 }
@@ -31,8 +31,8 @@ if ( empty( $asc_instance_prefix ) ) {
 		$asc_instance_prefix = ASC_PREFIX;
 	} else {
 		wp_die(
-			esc_html__( 'accessSchema-client requires $asc_instance_prefix in prefix.php.', 'accessschema-client' ),
-			esc_html__( 'Missing Variable: $asc_instance_prefix', 'accessschema-client' ),
+			esc_html__( 'accessSchema-client requires $asc_instance_prefix in prefix.php.', 'accessschema' ),
+			esc_html__( 'Missing Variable: $asc_instance_prefix', 'accessschema' ),
 			array( 'response' => 500 )
 		);
 	}
@@ -72,7 +72,7 @@ if ( ! defined( $prefix . 'VERSION' ) ) {
 	define( $prefix . 'VERSION', '2.4.0' );
 }
 if ( ! defined( $prefix . 'TEXTDOMAIN' ) ) {
-	define( $prefix . 'TEXTDOMAIN', 'accessschema-client' );
+	define( $prefix . 'TEXTDOMAIN', 'accessschema' );
 }
 if ( ! defined( $prefix . 'ASSETS_URL' ) ) {
 	define( $prefix . 'ASSETS_URL', constant( $prefix . 'URL' ) . 'includes/assets/' );
