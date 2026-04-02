@@ -91,9 +91,14 @@ function accessSchema_render_user_role_ui( $user ) {
 			'ajax_url' => admin_url( 'admin-ajax.php' ),
 			'nonce'    => wp_create_nonce( 'accessSchema_admin_nonce' ),
 			'i18n'     => array(
-				'confirm_remove' => __( 'Remove this role?', 'accessschema' ),
-				'error'          => __( 'An error occurred', 'accessschema' ),
-				'no_roles'       => __( 'No roles assigned', 'accessschema' ),
+				'confirm_remove'    => __( 'Remove this role?', 'accessschema' ),
+				'error'             => __( 'An error occurred', 'accessschema' ),
+				'no_roles'          => __( 'No roles assigned', 'accessschema' ),
+				'no_results'        => __( 'No roles found', 'accessschema' ),
+				'searching'         => __( 'Searching...', 'accessschema' ),
+				'search_placeholder' => __( 'Search roles...', 'accessschema' ),
+				'select_placeholder' => __( 'Select roles to add...', 'accessschema' ),
+				'max_selected'      => __( 'Maximum roles selected', 'accessschema' ),
 			),
 		)
 	);

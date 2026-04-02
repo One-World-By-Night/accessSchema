@@ -21,7 +21,7 @@
         const $filter = $('#accessSchema-role-filter');
         if ($filter.length) {
             $filter.select2({
-                placeholder: 'Search roles...',
+                placeholder: (accessSchema_admin.i18n && accessSchema_admin.i18n.search_placeholder) || 'Search roles...',
                 allowClear: true,
                 minimumInputLength: 2,
                 ajax: {
@@ -157,7 +157,7 @@
         
         if ($select.length && $.fn.select2) {
             $select.select2({
-                placeholder: 'Select roles to add...',
+                placeholder: (accessSchema_admin.i18n && accessSchema_admin.i18n.select_placeholder) || 'Select roles to add...',
                 width: '100%',
                 allowClear: true,
                 closeOnSelect: false,
@@ -201,7 +201,7 @@
                         return accessSchema_admin.i18n.searching || 'Searching...';
                     },
                     maximumSelected: function(args) {
-                        return 'You can only select ' + args.maximum + ' roles';
+                        return (accessSchema_admin.i18n && accessSchema_admin.i18n.max_selected) || 'Maximum roles selected';
                     }
                 }
             });
