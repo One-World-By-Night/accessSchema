@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   jQuery(select).select2({
-    placeholder: 'Filter by tag',
+    placeholder: (window.ascI18n && ascI18n.filterByTag) || 'Filter by tag',
     width: 'resolve'
   });
 
