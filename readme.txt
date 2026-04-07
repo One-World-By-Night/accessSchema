@@ -17,18 +17,18 @@ accessSchema is a hierarchical role-based access control (RBAC) system for WordP
 ## Architecture
 
 - **Server** runs on sso.owbn.net. Single source of truth for all roles.
-- **Client** lives in owbn-core (`includes/accessschema/`), which is installed on every OWBN site. Talks to the server via REST API (remote mode), reads the local DB (local mode), or falls back to WordPress capabilities (disabled mode).
-- **Capability mapping** translates role paths into WordPress caps per-site. Each site defines its own map. See [CAPABILITY-MAP.md](CAPABILITY-MAP.md).
+- **Client** lives in owbn-core (includes/accessschema/), which is installed on every OWBN site. Talks to the server via REST API (remote mode), reads the local DB (local mode), or falls back to WordPress capabilities (disabled mode).
+- **Capability mapping** translates role paths into WordPress caps per-site. Each site defines its own map. See CAPABILITY-MAP.md.
 
 ## Role Structure
 
 Roles are slash-delimited paths organized in three tiers:
 
-- `chronicle/{slug}/{position}` — Chronicle staff (cm, hst, staff)
-- `coordinator/{slug}/{position}` — Genre/clan coordinators and sub-coordinators
-- `exec/{office}/{position}` — Executive team (hc, ahc1, ahc2, archivist, web)
+- chronicle/{slug}/{position} — Chronicle staff (cm, hst, staff)
+- coordinator/{slug}/{position} — Genre/clan coordinators and sub-coordinators
+- exec/{office}/{position} — Executive team (hc, ahc1, ahc2, archivist, web)
 
-Parent roles inherit access to children. A check against `chronicle/mckn` matches `chronicle/mckn/hst`.
+Parent roles inherit access to children. A check against chronicle/mckn matches chronicle/mckn/hst.
 
 ## Deployment
 
@@ -39,9 +39,9 @@ Parent roles inherit access to children. A check against `chronicle/mckn` matche
 
 ## Technical Reference
 
-- [Server plugin docs](accessschema/README.md) — hooks, filters, shortcodes, REST endpoints, DB schema
-- [Version history](accessschema/VERSION_HISTORY.md) — changelog
-- [Capability map](CAPABILITY-MAP.md) — role-to-capability translations per site
+- Server plugin docs: accessschema/README.md
+- Version history: accessschema/VERSION_HISTORY.md
+- Capability map: CAPABILITY-MAP.md
 
 ## Requirements
 
