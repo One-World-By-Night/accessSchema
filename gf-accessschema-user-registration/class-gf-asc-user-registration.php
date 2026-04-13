@@ -849,56 +849,6 @@ class GF_ASC_User_Registration extends GFFeedAddOn {
 							<p style="margin:4px 0 0;"><a href="<?php echo esc_url( admin_url( 'user-edit.php?user_id=' . intval( $processed ) ) ); ?>"><?php esc_html_e( 'View / Edit user', 'gf-asc-user-registration' ); ?> &rarr;</a></p>
 						</div>
 					</div>
-					<?php
-					$current_status = gform_get_meta( $entry_id, 'workflow_final_status' );
-					$status_choices = array( 'complete', 'approved', 'pending', 'rejected', 'cancelled' );
-					$status_nonce   = wp_create_nonce( 'gf_asc_set_status_' . $entry_id );
-					?>
-					<div style="margin-top:16px; padding-top:16px; border-top:1px solid #e0e0e0;">
-						<label for="gf-asc-status-select" style="font-weight:600; font-size:13px; display:block; margin-bottom:4px;">
-							<?php esc_html_e( 'Workflow Final Status', 'gf-asc-user-registration' ); ?>
-						</label>
-						<div style="display:flex; gap:8px; align-items:center;">
-							<select id="gf-asc-status-select" style="font-size:14px; padding:4px 8px;">
-								<?php foreach ( $status_choices as $choice ) : ?>
-									<option value="<?php echo esc_attr( $choice ); ?>" <?php selected( $current_status, $choice ); ?>><?php echo esc_html( ucfirst( $choice ) ); ?></option>
-								<?php endforeach; ?>
-							</select>
-							<button type="button" class="button" id="gf-asc-status-btn"
-								data-entry="<?php echo esc_attr( $entry_id ); ?>"
-								data-nonce="<?php echo esc_attr( $status_nonce ); ?>">
-								<?php esc_html_e( 'Update Status', 'gf-asc-user-registration' ); ?>
-							</button>
-							<span id="gf-asc-status-result" style="font-size:13px;"></span>
-						</div>
-					</div>
-					<script type="text/javascript">
-					jQuery(function($) {
-						$('#gf-asc-status-btn').on('click', function() {
-							var $btn = $(this);
-							var $result = $('#gf-asc-status-result');
-							var newStatus = $('#gf-asc-status-select').val();
-							$btn.prop('disabled', true);
-							$result.text('');
-							$.post(ajaxurl, {
-								action: 'gf_asc_set_status',
-								entry_id: $btn.data('entry'),
-								nonce: $btn.data('nonce'),
-								status: newStatus
-							}, function(response) {
-								if (response.success) {
-									$result.css('color', '#2e7d32').text('✓ ' + response.data.message);
-								} else {
-									$result.css('color', '#d63638').text(response.data || 'Failed');
-								}
-								$btn.prop('disabled', false);
-							}).fail(function() {
-								$result.css('color', '#d63638').text('Request failed');
-								$btn.prop('disabled', false);
-							});
-						});
-					});
-					</script>
 				<?php else : ?>
 					<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px 24px;">
 
@@ -1003,6 +953,60 @@ class GF_ASC_User_Registration extends GFFeedAddOn {
 				<?php endif; ?>
 			</div>
 		</div>
+
+		<?php
+		$current_status = gform_get_meta( $entry_id, 'workflow_final_status' );
+		$status_choices = array( 'complete', 'approved', 'pending', 'rejected', 'cancelled' );
+		$status_nonce   = wp_create_nonce( 'gf_asc_set_status_' . $entry_id );
+		?>
+		<div style="background:#fff; border:1px solid #c3c4c7; border-radius:4px; margin:20px 0; padding:12px 16px;">
+			<label for="gf-asc-status-select" style="font-weight:600; font-size:13px; display:block; margin-bottom:4px;">
+				<?php esc_html_e( 'Workflow Final Status', 'gf-asc-user-registration' ); ?>
+				<?php if ( $current_status ) : ?>
+					<span style="font-weight:400; color:#50575e;">(<?php echo esc_html( __( 'currently:', 'gf-asc-user-registration' ) . ' ' . ucfirst( $current_status ) ); ?>)</span>
+				<?php endif; ?>
+			</label>
+			<div style="display:flex; gap:8px; align-items:center;">
+				<select id="gf-asc-status-select" style="font-size:14px; padding:4px 8px;">
+					<?php foreach ( $status_choices as $choice ) : ?>
+						<option value="<?php echo esc_attr( $choice ); ?>" <?php selected( $current_status, $choice ); ?>><?php echo esc_html( ucfirst( $choice ) ); ?></option>
+					<?php endforeach; ?>
+				</select>
+				<button type="button" class="button" id="gf-asc-status-btn"
+					data-entry="<?php echo esc_attr( $entry_id ); ?>"
+					data-nonce="<?php echo esc_attr( $status_nonce ); ?>">
+					<?php esc_html_e( 'Update Status', 'gf-asc-user-registration' ); ?>
+				</button>
+				<span id="gf-asc-status-result" style="font-size:13px;"></span>
+			</div>
+		</div>
+		<script type="text/javascript">
+		jQuery(function($) {
+			$('#gf-asc-status-btn').on('click', function() {
+				var $btn = $(this);
+				var $result = $('#gf-asc-status-result');
+				var newStatus = $('#gf-asc-status-select').val();
+				$btn.prop('disabled', true);
+				$result.text('');
+				$.post(ajaxurl, {
+					action: 'gf_asc_set_status',
+					entry_id: $btn.data('entry'),
+					nonce: $btn.data('nonce'),
+					status: newStatus
+				}, function(response) {
+					if (response.success) {
+						$result.css('color', '#2e7d32').text('✓ ' + response.data.message);
+					} else {
+						$result.css('color', '#d63638').text(response.data || 'Failed');
+					}
+					$btn.prop('disabled', false);
+				}).fail(function() {
+					$result.css('color', '#d63638').text('Request failed');
+					$btn.prop('disabled', false);
+				});
+			});
+		});
+		</script>
 
 		<?php if ( ! $processed ) : ?>
 		<script type="text/javascript">
