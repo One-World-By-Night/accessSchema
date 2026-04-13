@@ -118,6 +118,7 @@ class GF_ASC_User_Registration extends GFFeedAddOn {
 
 		// Register the AJAX handler for manual feed processing.
 		add_action( 'wp_ajax_gf_asc_process_entry', array( $this, 'ajax_process_entry' ) );
+		add_action( 'wp_ajax_gf_asc_set_status', array( $this, 'ajax_set_status' ) );
 
 		// Add "Create Account" panel on entry detail page (main content, below notes).
 		add_action( 'gform_entry_detail', array( $this, 'render_entry_meta_box' ), 10, 2 );
@@ -848,6 +849,56 @@ class GF_ASC_User_Registration extends GFFeedAddOn {
 							<p style="margin:4px 0 0;"><a href="<?php echo esc_url( admin_url( 'user-edit.php?user_id=' . intval( $processed ) ) ); ?>"><?php esc_html_e( 'View / Edit user', 'gf-asc-user-registration' ); ?> &rarr;</a></p>
 						</div>
 					</div>
+					<?php
+					$current_status = gform_get_meta( $entry_id, 'workflow_final_status' );
+					$status_choices = array( 'complete', 'approved', 'pending', 'rejected', 'cancelled' );
+					$status_nonce   = wp_create_nonce( 'gf_asc_set_status_' . $entry_id );
+					?>
+					<div style="margin-top:16px; padding-top:16px; border-top:1px solid #e0e0e0;">
+						<label for="gf-asc-status-select" style="font-weight:600; font-size:13px; display:block; margin-bottom:4px;">
+							<?php esc_html_e( 'Workflow Final Status', 'gf-asc-user-registration' ); ?>
+						</label>
+						<div style="display:flex; gap:8px; align-items:center;">
+							<select id="gf-asc-status-select" style="font-size:14px; padding:4px 8px;">
+								<?php foreach ( $status_choices as $choice ) : ?>
+									<option value="<?php echo esc_attr( $choice ); ?>" <?php selected( $current_status, $choice ); ?>><?php echo esc_html( ucfirst( $choice ) ); ?></option>
+								<?php endforeach; ?>
+							</select>
+							<button type="button" class="button" id="gf-asc-status-btn"
+								data-entry="<?php echo esc_attr( $entry_id ); ?>"
+								data-nonce="<?php echo esc_attr( $status_nonce ); ?>">
+								<?php esc_html_e( 'Update Status', 'gf-asc-user-registration' ); ?>
+							</button>
+							<span id="gf-asc-status-result" style="font-size:13px;"></span>
+						</div>
+					</div>
+					<script type="text/javascript">
+					jQuery(function($) {
+						$('#gf-asc-status-btn').on('click', function() {
+							var $btn = $(this);
+							var $result = $('#gf-asc-status-result');
+							var newStatus = $('#gf-asc-status-select').val();
+							$btn.prop('disabled', true);
+							$result.text('');
+							$.post(ajaxurl, {
+								action: 'gf_asc_set_status',
+								entry_id: $btn.data('entry'),
+								nonce: $btn.data('nonce'),
+								status: newStatus
+							}, function(response) {
+								if (response.success) {
+									$result.css('color', '#2e7d32').text('✓ ' + response.data.message);
+								} else {
+									$result.css('color', '#d63638').text(response.data || 'Failed');
+								}
+								$btn.prop('disabled', false);
+							}).fail(function() {
+								$result.css('color', '#d63638').text('Request failed');
+								$btn.prop('disabled', false);
+							});
+						});
+					});
+					</script>
 				<?php else : ?>
 					<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px 24px;">
 
@@ -1150,5 +1201,30 @@ class GF_ASC_User_Registration extends GFFeedAddOn {
 				'user_id' => $user_id,
 			)
 		);
+	}
+
+	/**
+	 * AJAX: set workflow_final_status on an entry (admin override).
+	 */
+	public function ajax_set_status() {
+		$entry_id = isset( $_POST['entry_id'] ) ? absint( $_POST['entry_id'] ) : 0;
+		check_ajax_referer( 'gf_asc_set_status_' . $entry_id, 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( 'Unauthorized.' );
+		}
+		if ( ! $entry_id ) {
+			wp_send_json_error( 'Missing entry ID.' );
+		}
+		$status = isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : '';
+		$allowed = array( 'complete', 'approved', 'pending', 'rejected', 'cancelled' );
+		if ( ! in_array( $status, $allowed, true ) ) {
+			wp_send_json_error( 'Invalid status.' );
+		}
+		gform_update_meta( $entry_id, 'workflow_final_status', $status );
+		gform_update_meta( $entry_id, 'workflow_final_status_timestamp', time() );
+		if ( in_array( $status, array( 'complete', 'rejected', 'cancelled' ), true ) ) {
+			gform_update_meta( $entry_id, 'workflow_step', 0 );
+		}
+		wp_send_json_success( array( 'message' => 'Set to ' . ucfirst( $status ) ) );
 	}
 }
