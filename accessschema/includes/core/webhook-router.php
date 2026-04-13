@@ -218,6 +218,7 @@ function accessSchema_api_permission_check( $request ) {
 	$read_endpoints = array(
 		'/access-schema/v1/roles',
 		'/access-schema/v1/roles/all',
+		'/access-schema/v1/roles-by-pattern',
 		'/access-schema/v1/check',
 	);
 
