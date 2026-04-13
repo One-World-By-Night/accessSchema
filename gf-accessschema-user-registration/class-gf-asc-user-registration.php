@@ -1122,6 +1122,10 @@ class GF_ASC_User_Registration extends GFFeedAddOn {
 		$user_id = rgar( $result, 'created_by' );
 		if ( $user_id ) {
 			gform_update_meta( $entry_id, 'gf_asc_user_created', $user_id );
+				// Mark the workflow complete so the entries list shows "Complete".
+				gform_update_meta( $entry_id, 'workflow_final_status', 'complete' );
+				gform_update_meta( $entry_id, 'workflow_final_status_timestamp', time() );
+				gform_update_meta( $entry_id, 'workflow_step', 0 );
 		}
 
 		// Approve the Gravity Flow workflow step if active.
