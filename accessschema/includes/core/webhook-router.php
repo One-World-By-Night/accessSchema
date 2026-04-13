@@ -58,6 +58,26 @@ add_action(
 			)
 		);
 
+		// Bulk lookup: all holders for roles matching a SQL LIKE pattern.
+		// Accepts 'pattern' (e.g., "chronicle/%/cm") and returns a map of
+		// role_path => [ { user_id, display_name, email, user_login }, ... ].
+		register_rest_route(
+			'access-schema/v1',
+			'/roles-by-pattern',
+			array(
+				'methods'             => 'POST',
+				'callback'            => 'accessSchema_api_roles_by_pattern',
+				'permission_callback' => 'accessSchema_api_permission_check',
+				'args'                => array(
+					'pattern' => array(
+						'required'          => true,
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+				),
+			)
+		);
+
 		// Grant a role to a user
 		register_rest_route(
 			'access-schema/v1',
@@ -436,6 +456,63 @@ function accessSchema_api_register_roles( $request ) {
  * @param WP_REST_Request $request The REST request object with user identification parameters.
  * @return WP_REST_Response|WP_Error Response with 'email' and 'roles' keys, or error if user not found.
  */
+/**
+ * REST: bulk lookup of role holders by SQL LIKE pattern.
+ *
+ * Returns a map of role_path => array of user objects. Single query,
+ * cached 5 minutes. Intended for reports that need every holder of
+ * every role matching a pattern like "chronicle/%/cm".
+ */
+function accessSchema_api_roles_by_pattern( $request ) {
+	global $wpdb;
+	$params  = $request->get_json_params();
+	$pattern = isset( $params['pattern'] ) ? sanitize_text_field( $params['pattern'] ) : '';
+	if ( '' === $pattern ) {
+		return new WP_Error( 'missing_pattern', 'pattern is required.', array( 'status' => 400 ) );
+	}
+
+	$cache_key = 'api_roles_by_pattern_' . md5( $pattern );
+	$cached    = wp_cache_get( $cache_key, 'accessSchema' );
+	if ( false !== $cached ) {
+		return rest_ensure_response( $cached );
+	}
+
+	$roles_table = $wpdb->prefix . 'accessSchema_roles';
+	$ur_table    = $wpdb->prefix . 'accessSchema_user_roles';
+
+	$rows = $wpdb->get_results( $wpdb->prepare(
+		"SELECT r.full_path, u.ID AS user_id, u.display_name, u.user_email, u.user_login
+		   FROM {$ur_table} ur
+		   JOIN {$roles_table} r ON r.id = ur.role_id
+		   JOIN {$wpdb->users} u ON u.ID = ur.user_id
+		  WHERE r.full_path LIKE %s
+		    AND ur.is_active = 1
+		    AND r.is_active = 1
+		    AND ( ur.expires_at IS NULL OR ur.expires_at > %s )
+		  ORDER BY r.full_path",
+		$pattern,
+		current_time( 'mysql' )
+	) );
+
+	$map = array();
+	foreach ( $rows as $row ) {
+		$map[ $row->full_path ][] = array(
+			'user_id'      => (int) $row->user_id,
+			'display_name' => $row->display_name,
+			'email'        => $row->user_email,
+			'user_login'   => $row->user_login,
+		);
+	}
+
+	$response = array(
+		'pattern' => $pattern,
+		'roles'   => $map,
+		'count'   => count( $rows ),
+	);
+	wp_cache_set( $cache_key, $response, 'accessSchema', 300 );
+	return rest_ensure_response( $response );
+}
+
 function accessSchema_api_get_roles( $request ) {
 	$params = $request->get_json_params();
 
