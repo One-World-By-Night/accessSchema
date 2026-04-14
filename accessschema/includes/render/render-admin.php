@@ -112,6 +112,21 @@ function accessSchema_render_user_role_ui( $user ) {
 function accessSchema_render_user_role_select( $all_roles, $assigned, $user_id ) {
 	?>
 	<h2><?php esc_html_e( 'Access Schema Roles', 'accessschema' ); ?></h2>
+	<?php
+	$denied_notices = function_exists( 'accessSchema_take_denied_notices' ) ? accessSchema_take_denied_notices() : array();
+	if ( ! empty( $denied_notices ) ) :
+		?>
+		<div class="notice notice-error inline" style="margin:10px 0; padding:10px 14px;">
+			<p style="margin:0 0 6px; font-weight:600;"><?php esc_html_e( 'Role assignment blocked by rules:', 'accessschema' ); ?></p>
+			<ul style="margin:0 0 0 20px; list-style:disc;">
+				<?php foreach ( $denied_notices as $n ) : ?>
+					<li><code><?php echo esc_html( $n['role'] ); ?></code> — <?php echo esc_html( $n['reason'] ); ?></li>
+				<?php endforeach; ?>
+			</ul>
+		</div>
+		<?php
+	endif;
+	?>
 	<?php wp_nonce_field( 'accessSchema_user_roles_action', 'accessSchema_user_roles_nonce' ); ?>
 	
 	<table class="form-table" role="presentation">
@@ -304,25 +319,19 @@ function accessSchema_user_profile_update( $user_id ) {
 }
 
 /**
- * Surface any ASC role denial reasons on the next admin page load.
+ * Pull any pending ASC role denial notices for the current admin user.
+ * Called from within the ASC section so notices render inline, not at
+ * the top of the page where they're easy to miss.
  */
-add_action( 'admin_notices', function () {
-	$key      = 'accessSchema_denied_notices_' . get_current_user_id();
-	$notices  = get_transient( $key );
+function accessSchema_take_denied_notices() {
+	$key     = 'accessSchema_denied_notices_' . get_current_user_id();
+	$notices = get_transient( $key );
 	if ( empty( $notices ) || ! is_array( $notices ) ) {
-		return;
+		return array();
 	}
 	delete_transient( $key );
-	echo '<div class="notice notice-error"><p><strong>' . esc_html__( 'Access Schema: role assignment blocked', 'accessschema' ) . '</strong></p><ul style="margin-left:20px; list-style:disc;">';
-	foreach ( $notices as $n ) {
-		printf(
-			'<li><code>%s</code> — %s</li>',
-			esc_html( $n['role'] ),
-			esc_html( $n['reason'] )
-		);
-	}
-	echo '</ul></div>';
-} );
+	return $notices;
+}
 
 /**
  * Display user's assigned roles in profile (read-only)
