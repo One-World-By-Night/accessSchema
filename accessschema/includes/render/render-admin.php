@@ -260,6 +260,37 @@ function accessSchema_user_profile_update( $user_id ) {
 	// Update roles
 	$result = accessSchema_save_user_roles( $user_id, $final_roles, get_current_user_id() );
 
+	// Detect roles that were requested but didn't land (blocked by rules).
+	// accessSchema_save_user_roles returns true/false and rolls back on any
+	// failure, so we re-read and diff to surface denial reasons.
+	$applied_roles  = accessSchema_get_user_roles( $user_id, false, false );
+	$missing_adds   = array_values( array_diff( $add_roles, $applied_roles ) );
+	$denied_notices = array();
+	foreach ( $missing_adds as $role ) {
+		$tkey   = 'accessSchema_grant_denial_' . $user_id . '_' . md5( $role );
+		$denial = get_transient( $tkey );
+		if ( is_array( $denial ) && ! empty( $denial['reason'] ) ) {
+			$denied_notices[] = array(
+				'role'   => $role,
+				'reason' => $denial['reason'],
+			);
+			delete_transient( $tkey );
+		} else {
+			$denied_notices[] = array(
+				'role'   => $role,
+				'reason' => __( 'assignment blocked (no reason recorded)', 'accessschema' ),
+			);
+		}
+	}
+
+	if ( ! empty( $denied_notices ) ) {
+		set_transient(
+			'accessSchema_denied_notices_' . get_current_user_id(),
+			$denied_notices,
+			60
+		);
+	}
+
 	if ( is_wp_error( $result ) ) {
 		add_action(
 			'admin_notices',
@@ -271,6 +302,27 @@ function accessSchema_user_profile_update( $user_id ) {
 		);
 	}
 }
+
+/**
+ * Surface any ASC role denial reasons on the next admin page load.
+ */
+add_action( 'admin_notices', function () {
+	$key      = 'accessSchema_denied_notices_' . get_current_user_id();
+	$notices  = get_transient( $key );
+	if ( empty( $notices ) || ! is_array( $notices ) ) {
+		return;
+	}
+	delete_transient( $key );
+	echo '<div class="notice notice-error"><p><strong>' . esc_html__( 'Access Schema: role assignment blocked', 'accessschema' ) . '</strong></p><ul style="margin-left:20px; list-style:disc;">';
+	foreach ( $notices as $n ) {
+		printf(
+			'<li><code>%s</code> — %s</li>',
+			esc_html( $n['role'] ),
+			esc_html( $n['reason'] )
+		);
+	}
+	echo '</ul></div>';
+} );
 
 /**
  * Display user's assigned roles in profile (read-only)
