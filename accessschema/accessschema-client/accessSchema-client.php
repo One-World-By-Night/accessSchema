@@ -3,7 +3,7 @@
  * Plugin Name: accessSchema Client
  * Plugin URI: https://github.com/One-World-By-Night/accessSchema
  * Description: WordPress client for a hosted accessSchema instance.
- * Version: 2.5.0
+ * Version: 2.5.1
  * Author: greghacke
  * License: GPL-2.0-or-later
  * Text Domain: accessschema-client

@@ -146,6 +146,35 @@ if ( ! function_exists( 'accessSchema_client_remote_get' ) ) {
 	}
 }
 
+if ( ! function_exists( 'accessSchema_client_build_user_payload' ) ) {
+	/**
+	 * Build the user-identification payload for a server request.
+	 *
+	 * Prefers player_id (stable across email changes). Always includes email
+	 * as a fallback for legacy servers and for users who have no player_id yet.
+	 *
+	 * @param string       $email Email for the user.
+	 * @param WP_User|null $user  Optional pre-resolved user; if null, resolved by email.
+	 * @return array Payload with 'email' and optionally 'player_id'.
+	 */
+	function accessSchema_client_build_user_payload( $email, $user = null ) {
+		$payload = array( 'email' => sanitize_email( $email ) );
+
+		if ( ! ( $user instanceof WP_User ) ) {
+			$user = get_user_by( 'email', $email );
+		}
+
+		if ( $user ) {
+			$pid = get_user_meta( $user->ID, 'player_id', true );
+			if ( ! empty( $pid ) ) {
+				$payload['player_id'] = (string) $pid;
+			}
+		}
+
+		return $payload;
+	}
+}
+
 if ( ! function_exists( 'accessSchema_client_remote_get_roles_by_email' ) ) {
 	function accessSchema_client_remote_get_roles_by_email( $email, $client_id ) {
 		$user = get_user_by( 'email', $email );
@@ -160,7 +189,7 @@ if ( ! function_exists( 'accessSchema_client_remote_get_roles_by_email' ) ) {
 				return new WP_Error( 'user_not_found', 'User not found.', array( 'status' => 404 ) );
 			}
 
-			return accessSchema_client_local_post( 'roles', array( 'email' => sanitize_email( $email ) ) );
+			return accessSchema_client_local_post( 'roles', accessSchema_client_build_user_payload( $email, $user ) );
 		}
 
 		// Check cache first.
@@ -175,7 +204,7 @@ if ( ! function_exists( 'accessSchema_client_remote_get_roles_by_email' ) ) {
 
 		error_log( '[AccessSchema Client] No cache — requesting remote roles for ' . sanitize_email( $email ) );
 
-		$response = accessSchema_client_remote_post( $client_id, 'roles', array( 'email' => sanitize_email( $email ) ) );
+		$response = accessSchema_client_remote_post( $client_id, 'roles', accessSchema_client_build_user_payload( $email, $user ) );
 
 		if (
 			! is_wp_error( $response ) &&
@@ -186,6 +215,11 @@ if ( ! function_exists( 'accessSchema_client_remote_get_roles_by_email' ) ) {
 		) {
 			update_user_meta( $user->ID, 'accessschema_cached_roles', $response['roles'] );
 			update_user_meta( $user->ID, 'accessschema_cached_roles_timestamp', time() );
+
+			// Auto-backfill player_id from server response when local meta is missing.
+			if ( ! empty( $response['player_id'] ) && empty( get_user_meta( $user->ID, 'player_id', true ) ) ) {
+				update_user_meta( $user->ID, 'player_id', sanitize_text_field( $response['player_id'] ) );
+			}
 		} elseif ( is_wp_error( $response ) ) {
 			error_log( '[AccessSchema Client] Failed to retrieve roles remotely: ' . $response->get_error_message() );
 		}
@@ -198,10 +232,8 @@ if ( ! function_exists( 'accessSchema_client_remote_grant_role' ) ) {
 	function accessSchema_client_remote_grant_role( $email, $role_path, $client_id ) {
 		$user = get_user_by( 'email', $email );
 
-		$payload = array(
-			'email'     => sanitize_email( $email ),
-			'role_path' => sanitize_text_field( $role_path ),
-		);
+		$payload              = accessSchema_client_build_user_payload( $email, $user );
+		$payload['role_path'] = sanitize_text_field( $role_path );
 
 		$result = accessSchema_is_remote_mode( $client_id )
 			? accessSchema_client_remote_post( $client_id, 'grant', $payload )
@@ -220,10 +252,8 @@ if ( ! function_exists( 'accessSchema_client_remote_revoke_role' ) ) {
 	function accessSchema_client_remote_revoke_role( $email, $role_path, $client_id ) {
 		$user = get_user_by( 'email', $email );
 
-		$payload = array(
-			'email'     => sanitize_email( $email ),
-			'role_path' => sanitize_text_field( $role_path ),
-		);
+		$payload              = accessSchema_client_build_user_payload( $email, $user );
+		$payload['role_path'] = sanitize_text_field( $role_path );
 
 		$result = accessSchema_is_remote_mode( $client_id )
 			? accessSchema_client_remote_post( $client_id, 'revoke', $payload )
@@ -286,7 +316,7 @@ if ( ! function_exists( 'accessSchema_refresh_roles_for_user' ) ) {
 		if ( accessSchema_is_remote_mode( $client_id ) ) {
 			$response = accessSchema_client_remote_get_roles_by_email( $email, $client_id );
 		} else {
-			$response = accessSchema_client_local_post( 'roles', array( 'email' => $email ) );
+			$response = accessSchema_client_local_post( 'roles', accessSchema_client_build_user_payload( $email, $user ) );
 		}
 
 		if (
@@ -328,11 +358,9 @@ if ( ! function_exists( 'accessSchema_client_remote_check_access' ) ) {
 			return new WP_Error( 'invalid_slug', 'Plugin slug must be a non-empty string.' );
 		}
 
-		$payload = array(
-			'email'            => $email,
-			'role_path'        => sanitize_text_field( $role_path ),
-			'include_children' => (bool) $include_children,
-		);
+		$payload                     = accessSchema_client_build_user_payload( $email );
+		$payload['role_path']        = sanitize_text_field( $role_path );
+		$payload['include_children'] = (bool) $include_children;
 
 		if ( ! function_exists( 'accessSchema_is_remote_mode' ) ) {
 			return new WP_Error( 'missing_dependency', 'accessSchema_is_remote_mode() is not available.' );
@@ -504,7 +532,7 @@ if ( ! function_exists( 'accessSchema_client_local_get_roles_by_email' ) ) {
 	 * @return array The response with 'roles' key, or empty array on failure.
 	 */
 	function accessSchema_client_local_get_roles_by_email( $email, $client_id ) {
-		$result = accessSchema_client_local_post( 'roles', array( 'email' => $email ) );
+		$result = accessSchema_client_local_post( 'roles', accessSchema_client_build_user_payload( $email ) );
 		if ( is_wp_error( $result ) ) {
 			return array( 'roles' => array() );
 		}
@@ -523,14 +551,10 @@ if ( ! function_exists( 'accessSchema_client_local_check_access' ) ) {
 	 * @return bool Whether the user has access.
 	 */
 	function accessSchema_client_local_check_access( $email, $role_path, $client_id ) {
-		$result = accessSchema_client_local_post(
-			'check',
-			array(
-				'email'            => $email,
-				'role_path'        => $role_path,
-				'include_children' => true,
-			)
-		);
+		$payload                     = accessSchema_client_build_user_payload( $email );
+		$payload['role_path']        = $role_path;
+		$payload['include_children'] = true;
+		$result                      = accessSchema_client_local_post( 'check', $payload );
 		if ( is_wp_error( $result ) ) {
 			return false;
 		}

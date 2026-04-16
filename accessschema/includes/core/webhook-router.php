@@ -367,15 +367,24 @@ function accessSchema_check_rate_limit( $identifier ) {
 /**
  * Resolve a WordPress user from request parameters.
  *
- * Looks up the user by 'id' or 'email' from the provided parameters. Returns
- * null if no user is found or if the user lacks the 'read' capability.
+ * Preferred: 'player_id' (stable across email changes). Falls back to 'id', then 'email'.
  *
- *
- * @param array $params Associative array with optional 'id' (int) or 'email' (string) keys.
+ * @param array $params Associative array with optional 'player_id' (string), 'id' (int), or 'email' (string) keys.
  * @return WP_User|null The resolved user object, or null if not found or invalid.
  */
 function accessSchema_resolve_user( $params ) {
-	if ( ! empty( $params['id'] ) ) {
+	$user = null;
+
+	if ( ! empty( $params['player_id'] ) ) {
+		$pid   = sanitize_text_field( $params['player_id'] );
+		$users = get_users( array(
+			'meta_key'   => 'player_id',
+			'meta_value' => $pid,
+			'number'     => 1,
+			'fields'     => 'all',
+		) );
+		$user = ! empty( $users ) ? $users[0] : null;
+	} elseif ( ! empty( $params['id'] ) ) {
 		$user = get_user_by( 'id', absint( $params['id'] ) );
 	} elseif ( ! empty( $params['email'] ) ) {
 		$user = get_user_by( 'email', sanitize_email( $params['email'] ) );
@@ -383,7 +392,6 @@ function accessSchema_resolve_user( $params ) {
 		return null;
 	}
 
-	// Validate user exists and has basic read capability
 	if ( $user && user_can( $user->ID, 'read' ) ) {
 		return $user;
 	}
@@ -518,7 +526,7 @@ function accessSchema_api_get_roles( $request ) {
 	$params = $request->get_json_params();
 
 	// Reverse lookup: role_path → users who hold that role.
-	if ( ! empty( $params['role_path'] ) && empty( $params['email'] ) && empty( $params['id'] ) ) {
+	if ( ! empty( $params['role_path'] ) && empty( $params['email'] ) && empty( $params['id'] ) && empty( $params['player_id'] ) ) {
 		$role_path = sanitize_text_field( $params['role_path'] );
 		$cache_key = 'api_role_users_' . md5( $role_path );
 		$cached    = wp_cache_get( $cache_key, 'accessSchema' );
@@ -553,7 +561,7 @@ function accessSchema_api_get_roles( $request ) {
 	$user = accessSchema_resolve_user( $params );
 
 	if ( ! $user ) {
-		return new WP_Error( 'user_not_found', 'User not found by id or email.', array( 'status' => 404 ) );
+		return new WP_Error( 'user_not_found', 'User not found by player_id, id, or email.', array( 'status' => 404 ) );
 	}
 
 	// Check cache
@@ -597,7 +605,7 @@ function accessSchema_api_grant_role( $request ) {
 	$expires_at = isset( $params['expires_at'] ) ? sanitize_text_field( $params['expires_at'] ) : null;
 
 	if ( ! $user || ! $role_path ) {
-		return new WP_Error( 'invalid_request', 'Missing user (id/email) or role_path.', array( 'status' => 400 ) );
+		return new WP_Error( 'invalid_request', 'Missing user (player_id/id/email) or role_path.', array( 'status' => 400 ) );
 	}
 
 	// Validate expiration date if provided
@@ -649,7 +657,7 @@ function accessSchema_api_revoke_role( $request ) {
 	$role_path = sanitize_text_field( $params['role_path'] ?? '' );
 
 	if ( ! $user || ! $role_path ) {
-		return new WP_Error( 'invalid_request', 'Missing user (id/email) or role_path.', array( 'status' => 400 ) );
+		return new WP_Error( 'invalid_request', 'Missing user (player_id/id/email) or role_path.', array( 'status' => 400 ) );
 	}
 
 	$result = accessSchema_remove_role( $user->ID, $role_path );
@@ -683,7 +691,7 @@ function accessSchema_api_check_permission( $request ) {
 	$include_children = ! empty( $params['include_children'] );
 
 	if ( ! $user || ! $role_path ) {
-		return new WP_Error( 'invalid_request', 'Missing user (id/email) or role_path.', array( 'status' => 400 ) );
+		return new WP_Error( 'invalid_request', 'Missing user (player_id/id/email) or role_path.', array( 'status' => 400 ) );
 	}
 
 	// Use cached permission check
