@@ -125,6 +125,55 @@ class GF_ASC_User_Registration extends GFFeedAddOn {
 
 		// Also render in Gravity Flow inbox entry detail.
 		add_action( 'gravityflow_entry_detail', array( $this, 'render_entry_meta_box' ), 10, 2 );
+
+		// Quick-filter links on the entries list view, gated to forms with an active feed.
+		add_filter( 'gform_filter_links_entry_list', array( $this, 'add_status_filter_links' ), 10, 3 );
+	}
+
+	/**
+	 * Add Approved/Pending/Rejected/Cancelled/Complete filter links to the entries list.
+	 * Only applied to forms with an active feed for this add-on.
+	 */
+	public function add_status_filter_links( $filter_links, $form, $include_counts ) {
+		if ( empty( $form['id'] ) ) {
+			return $filter_links;
+		}
+		$feeds = $this->get_active_feeds( $form['id'] );
+		if ( empty( $feeds ) ) {
+			return $filter_links;
+		}
+
+		$statuses = array(
+			'approved'  => __( 'Approved', 'gf-asc-user-registration' ),
+			'pending'   => __( 'Pending', 'gf-asc-user-registration' ),
+			'rejected'  => __( 'Rejected', 'gf-asc-user-registration' ),
+			'cancelled' => __( 'Cancelled', 'gf-asc-user-registration' ),
+			'complete'  => __( 'Complete', 'gf-asc-user-registration' ),
+		);
+
+		foreach ( $statuses as $key => $label ) {
+			$field_filters = array(
+				array(
+					'key'   => 'workflow_final_status',
+					'value' => $key,
+				),
+			);
+			$count = 0;
+			if ( $include_counts ) {
+				$count = GFAPI::count_entries(
+					$form['id'],
+					array( 'field_filters' => $field_filters )
+				);
+			}
+			$filter_links[] = array(
+				'id'            => 'asc_status_' . $key,
+				'field_filters' => $field_filters,
+				'count'         => (int) $count,
+				'label'         => $label,
+			);
+		}
+
+		return $filter_links;
 	}
 
 	/**
