@@ -364,6 +364,27 @@ function accessSchema_check_rate_limit( $identifier ) {
 	return true;
 }
 
+// Per-day counter for which resolver path was used. Last 7 days kept.
+function accessSchema_track_resolve_path( string $path ): void {
+	static $valid = array( 'by_player_id', 'by_id', 'by_email' );
+	if ( ! in_array( $path, $valid, true ) ) return;
+
+	$day  = current_time( 'Y-m-d' );
+	$stats = get_option( 'accessSchema_resolve_stats', array() );
+	if ( ! is_array( $stats ) ) $stats = array();
+	if ( ! isset( $stats[ $day ] ) || ! is_array( $stats[ $day ] ) ) $stats[ $day ] = array();
+	if ( ! isset( $stats[ $day ][ $path ] ) ) $stats[ $day ][ $path ] = 0;
+	$stats[ $day ][ $path ]++;
+
+	// Keep last 7 days only.
+	if ( count( $stats ) > 7 ) {
+		ksort( $stats );
+		$stats = array_slice( $stats, -7, null, true );
+	}
+
+	update_option( 'accessSchema_resolve_stats', $stats, false );
+}
+
 /**
  * Resolve a WordPress user from request parameters.
  *
@@ -374,8 +395,10 @@ function accessSchema_check_rate_limit( $identifier ) {
  */
 function accessSchema_resolve_user( $params ) {
 	$user = null;
+	$path = '';
 
 	if ( ! empty( $params['player_id'] ) ) {
+		$path  = 'by_player_id';
 		$pid   = sanitize_text_field( $params['player_id'] );
 		$users = get_users( array(
 			'meta_key'   => 'player_id',
@@ -385,12 +408,16 @@ function accessSchema_resolve_user( $params ) {
 		) );
 		$user = ! empty( $users ) ? $users[0] : null;
 	} elseif ( ! empty( $params['id'] ) ) {
+		$path = 'by_id';
 		$user = get_user_by( 'id', absint( $params['id'] ) );
 	} elseif ( ! empty( $params['email'] ) ) {
+		$path = 'by_email';
 		$user = get_user_by( 'email', sanitize_email( $params['email'] ) );
 	} else {
 		return null;
 	}
+
+	accessSchema_track_resolve_path( $path );
 
 	if ( $user && user_can( $user->ID, 'read' ) ) {
 		return $user;
