@@ -1222,6 +1222,9 @@ class GF_ASC_User_Registration extends GFFeedAddOn {
 			wp_send_json_error( $result->get_error_message() );
 		}
 
+		// Approve the Gravity Flow workflow step if active.
+		$this->approve_workflow_step( $entry_id, $form );
+
 		// Find the user ID from the entry.
 		$user_id = rgar( $result, 'created_by' );
 		if ( $user_id ) {
@@ -1230,22 +1233,6 @@ class GF_ASC_User_Registration extends GFFeedAddOn {
 				gform_update_meta( $entry_id, 'workflow_final_status', 'complete' );
 				gform_update_meta( $entry_id, 'workflow_final_status_timestamp', time() );
 				gform_update_meta( $entry_id, 'workflow_step', 0 );
-		}
-
-		// Approve the Gravity Flow workflow step if active.
-		if ( class_exists( 'Gravity_Flow' ) ) {
-			$entry_fresh = GFAPI::get_entry( $entry_id );
-			$api         = new Gravity_Flow_API( $form_id );
-			$step        = $api->get_current_step( $entry_fresh );
-			if ( $step && 'approval' === $step->get_type() ) {
-				$assignee = $step->get_assignee( 'role|administrator' );
-				if ( $assignee ) {
-					$step->process_assignee_status( $assignee, 'approved', $form );
-				}
-				if ( $step->is_complete() ) {
-					$api->process_workflow( $entry_id );
-				}
-			}
 		}
 
 		wp_send_json_success(
@@ -1273,11 +1260,58 @@ class GF_ASC_User_Registration extends GFFeedAddOn {
 		if ( ! in_array( $status, $allowed, true ) ) {
 			wp_send_json_error( 'Invalid status.' );
 		}
+		// Remove the pending Gravity Flow inbox task.
+		if ( 'pending' !== $status ) {
+			$step = $this->get_current_workflow_step( $entry_id );
+			if ( $step ) {
+				$step->purge_assignees();
+			}
+		}
 		gform_update_meta( $entry_id, 'workflow_final_status', $status );
 		gform_update_meta( $entry_id, 'workflow_final_status_timestamp', time() );
 		if ( in_array( $status, array( 'complete', 'rejected', 'cancelled' ), true ) ) {
 			gform_update_meta( $entry_id, 'workflow_step', 0 );
 		}
 		wp_send_json_success( array( 'message' => 'Set to ' . ucfirst( $status ) ) );
+	}
+
+	/**
+	 * Approves the entry's current Gravity Flow approval step and advances the workflow.
+	 *
+	 * @param int   $entry_id The entry ID.
+	 * @param array $form     The form.
+	 */
+	private function approve_workflow_step( $entry_id, $form ) {
+		$step = $this->get_current_workflow_step( $entry_id );
+		if ( ! $step || 'approval' !== $step->get_type() ) {
+			return;
+		}
+		$assignee = $step->get_assignee( 'role|administrator' );
+		if ( $assignee ) {
+			$step->process_assignee_status( $assignee, 'approved', $form );
+		}
+		if ( $step->is_complete() ) {
+			$api = new Gravity_Flow_API( $form['id'] );
+			$api->process_workflow( $entry_id );
+		}
+	}
+
+	/**
+	 * Returns the entry's current Gravity Flow step, or false when no workflow step is in progress.
+	 *
+	 * @param int $entry_id The entry ID.
+	 *
+	 * @return Gravity_Flow_Step|false
+	 */
+	private function get_current_workflow_step( $entry_id ) {
+		if ( ! class_exists( 'Gravity_Flow_API' ) ) {
+			return false;
+		}
+		$entry = GFAPI::get_entry( $entry_id );
+		if ( is_wp_error( $entry ) || (int) rgar( $entry, 'workflow_step' ) <= 0 ) {
+			return false;
+		}
+		$api = new Gravity_Flow_API( $entry['form_id'] );
+		return $api->get_current_step( $entry );
 	}
 }
