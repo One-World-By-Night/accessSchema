@@ -197,9 +197,10 @@ function accessSchema_users_filter_ui( $which ) {
 	</label>
 	<input type="text" name="asc_pattern" id="asc_pattern"
 		value="<?php echo esc_attr( $current_pattern ); ?>"
-		placeholder="<?php esc_attr_e( 'Role pattern (e.g. chronicles/*/hst)', 'accessschema' ); ?>"
+		placeholder="<?php esc_attr_e( 'Role pattern (e.g. chronicle/*/hst)', 'accessschema' ); ?>"
 		class="accessSchema-pattern-input">
 	<?php
+	submit_button( __( 'Filter', 'accessschema' ), '', 'asc_filter', false );
 }
 add_action( 'restrict_manage_users', 'accessSchema_users_filter_ui' );
 

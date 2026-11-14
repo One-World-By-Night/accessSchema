@@ -1,0 +1,19 @@
+{
+	"id": "as-server",
+	"site": "https://support.owbn.net",
+	"category": { "slug": "as-server", "name": "accessSchema Server" },
+	"slugPrefix": "as-server-",
+	"guides": {
+		"overview": "what-is-accessschema"
+	},
+	"redirects": {
+		"managing-roles-and-users": "as-server-roles",
+		"setting-up-for-remote-sites": "as-server-settings",
+		"troubleshooting-accessschema": "as-server-troubleshooting"
+	},
+	"screens": {
+		"page:accessschema-roles": "roles",
+		"page:accessschema-rules": "rules",
+		"page:accessschema-settings": "settings"
+	}
+}

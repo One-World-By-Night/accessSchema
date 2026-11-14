@@ -178,7 +178,7 @@ function accessSchema_render_rules_page() {
 							<td><code><?php echo esc_html( $rule['trigger_pattern'] ); ?></code></td>
 							<td><code><?php echo esc_html( $rule['target_pattern'] ); ?></code></td>
 							<td><?php echo esc_html( $rule['description'] ); ?></td>
-							<td><?php echo $rule['is_active'] ? '&#9989;' : '&#10060;'; ?></td>
+							<td><?php echo $rule['is_active'] ? esc_html__( 'Yes', 'accessschema' ) : esc_html__( 'No', 'accessschema' ); ?></td>
 							<td>
 								<a href="<?php echo esc_url( wp_nonce_url(
 									add_query_arg( 'toggle_rule', $rule['id'] ),

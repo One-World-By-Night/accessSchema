@@ -1,0 +1,69 @@
+{
+	"site": "http://localhost:8923",
+	"viewport": {
+		"width": 1280,
+		"height": 900
+	},
+	"accounts": {
+		"archie": "Dana Whitfield, site admin"
+	},
+	"notes": "Captured from the help sandbox (~/owbn/_localwp-oat/help) after seed-cc-shots.php and seed-asc-shots.php: made-up roles and holders, sandbox-only keys. The plugin's screens are English-only, so the Portuguese pages reuse these images with Portuguese alt text.",
+	"pages": {
+		"roles": [
+			{
+				"heading": "The screen",
+				"path": "/wp-admin/users.php?page=accessSchema-roles",
+				"account": "archie",
+				"height": 1300,
+				"alt": {
+					"en": "The Access Schema Role Registry: Add Role(s) with Full Role Path(s), then Registered Roles with each role's Name, Full Path and Depth, Edit and Delete.",
+					"pt_BR": "O Access Schema Role Registry: Add Role(s) com Full Role Path(s), e depois Registered Roles com Name, Full Path e Depth de cada cargo, Edit e Delete."
+				}
+			}
+		],
+		"user-roles": [
+			{
+				"heading": "The screen",
+				"path": "/wp-admin/user-edit.php?user_id=6",
+				"account": "archie",
+				"crop": "h2:text-is(\"Access Schema Roles\") ~ table",
+				"alt": {
+					"en": "A member's Access Schema Roles: two Assigned Roles, each with a remove button, and Add Roles to pick more.",
+					"pt_BR": "Os Access Schema Roles de um membro: dois Assigned Roles, cada um com um botão de remover, e Add Roles para escolher mais."
+				}
+			},
+			{
+				"heading": "The screen",
+				"path": "/wp-admin/users.php",
+				"account": "archie",
+				"alt": {
+					"en": "The Users list with the ASC Roles column, the All ASC Roles menu, the Role pattern box and Filter.",
+					"pt_BR": "A lista Users com a coluna ASC Roles, o menu All ASC Roles, a caixa Role pattern e Filter."
+				}
+			}
+		],
+		"rules": [
+			{
+				"heading": "The screen",
+				"path": "/wp-admin/users.php?page=accessSchema-rules",
+				"account": "archie",
+				"alt": {
+					"en": "Access Schema Rules: Add Rule with Type, Trigger Pattern, Conflict Pattern and Description, and the Active Rules with one example rule.",
+					"pt_BR": "Access Schema Rules: Add Rule com Type, Trigger Pattern, Conflict Pattern e Description, e as Active Rules com uma regra de exemplo."
+				}
+			}
+		],
+		"settings": [
+			{
+				"heading": "The screen",
+				"path": "/wp-admin/options-general.php?page=accessschema-settings",
+				"account": "archie",
+				"height": 1300,
+				"alt": {
+					"en": "Access Schema Settings: the API URL, the read-only and read-write keys with Generate New, logging, cache and the advanced switches.",
+					"pt_BR": "Access Schema Settings: a API URL, as chaves somente leitura e de leitura e escrita com Generate New, registro, cache e as opções avançadas."
+				}
+			}
+		]
+	}
+}
