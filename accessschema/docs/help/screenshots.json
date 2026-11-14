@@ -33,7 +33,7 @@
 				}
 			},
 			{
-				"heading": "The screen",
+				"heading": "Find everyone with a role",
 				"path": "/wp-admin/users.php",
 				"account": "archie",
 				"alt": {
