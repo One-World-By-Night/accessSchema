@@ -17,7 +17,7 @@ wp-admin on sso.owbn.net → **Settings** → **Access Schema** (the screen is t
   - **Read-Only API Key** - lets a site read roles.
   - **Read-Write API Key** - lets a site give and take roles too.
   - **Generate New** makes a new key.
-- **Logging Settings** - **Log Level**, **Enable Audit Logging** (every role change and check), and **Audit Log Retention** in days.
+- **Logging Settings** - **Log Level**, **Enable Audit Logging** (every role change; API calls and checks are not logged), and **Audit Log Retention** in days.
 - **Performance Settings** - **Cache TTL** in seconds, and **Maximum Role Depth**.
 - **Advanced Settings** - **Enable REST API**, which other sites need, and **Remove Data on Uninstall**.
 - **Maintenance** - **Clear All Caches**, **Export Settings** and **Debug Information**, with counts of roles, assignments and log entries.

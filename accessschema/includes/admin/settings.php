@@ -87,7 +87,7 @@ function accessSchema_render_settings_page() {
 						<label>
 							<input type="checkbox" name="accessSchema_enable_audit" value="1"
 								<?php checked( get_option( 'accessSchema_enable_audit', true ) ); ?> />
-							<?php esc_html_e( 'Log all access checks and role changes', 'accessschema' ); ?>
+							<?php esc_html_e( 'Log role changes', 'accessschema' ); ?>
 						</label>
 					</td>
 				</tr>

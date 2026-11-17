@@ -42,8 +42,25 @@ function accessSchema_log_level_priority( $level ) {
 	return isset( $levels[ strtoupper( $level ) ] ) ? $levels[ strtoupper( $level ) ] : 1;
 }
 
+/**
+ * The actions the audit log records: role changes. API calls, permission checks, refusals and maintenance events
+ * are not written.
+ *
+ * @return string[]
+ */
+function accessSchema_logged_actions() {
+	return (array) apply_filters(
+		'accessSchema_logged_actions',
+		array( 'role_added', 'role_removed', 'roles_bulk_updated', 'role_created', 'role_updated', 'role_deleted', 'expired_roles_cleaned' )
+	);
+}
+
 // Main logging function
 function accessSchema_log_event( $user_id, $action, $role_path, $context = null, $performed_by = null, $level = 'INFO' ) {
+	if ( ! in_array( $action, accessSchema_logged_actions(), true ) ) {
+		return false;
+	}
+
 	// Check if we should log this level
 	$current_level = accessSchema_get_log_level();
 	if ( accessSchema_log_level_priority( $level ) < accessSchema_log_level_priority( $current_level ) ) {
@@ -127,6 +144,10 @@ function accessSchema_log_batch( $events ) {
 				'level'        => 'INFO',
 			)
 		);
+
+		if ( ! in_array( $event['action'], accessSchema_logged_actions(), true ) ) {
+			continue;
+		}
 
 		// Skip if level too low
 		if ( accessSchema_log_level_priority( $event['level'] ) < accessSchema_log_level_priority( accessSchema_get_log_level() ) ) {

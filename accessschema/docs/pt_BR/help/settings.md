@@ -17,7 +17,7 @@ wp-admin em sso.owbn.net → **Settings** → **Access Schema** (a tela se chama
   - **Read-Only API Key** - deixa um site ler cargos.
   - **Read-Write API Key** - deixa um site dar e tirar cargos também.
   - **Generate New** faz uma chave nova.
-- **Logging Settings** - **Log Level**, **Enable Audit Logging** (toda mudança e conferência de cargo) e **Audit Log Retention** em dias.
+- **Logging Settings** - **Log Level**, **Enable Audit Logging** (toda mudança de cargo; chamadas da API e conferências não entram no registro) e **Audit Log Retention** em dias.
 - **Performance Settings** - **Cache TTL** em segundos, e **Maximum Role Depth**.
 - **Advanced Settings** - **Enable REST API**, de que os outros sites precisam, e **Remove Data on Uninstall**.
 - **Maintenance** - **Clear All Caches**, **Export Settings** e **Debug Information**, com as contagens de cargos, concessões e entradas do registro.

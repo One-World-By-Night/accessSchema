@@ -1,5 +1,9 @@
 # accessSchema — Version History
 
+## 2.5.8
+
+- Audit log records role changes only (added, removed, bulk-updated, created, updated, deleted, expired). It no longer writes a row for every API call, permission check, refusal or rate limit, which had grown one site's log to 2.9 million rows.
+
 ## 2.5.0
 
 - Fixed role colors: category colors are now fixed per category instead of rotating index
